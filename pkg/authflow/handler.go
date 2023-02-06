@@ -5,11 +5,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/common-fate/cli/pkg/config"
@@ -23,14 +21,14 @@ import (
 type Response struct {
 	// Err is set if there was an error which
 	// prevented the flow from completing
-	Err     error
-	Token   *oauth2.Token
-	Context config.Context
+	Err          error
+	Token        *oauth2.Token
+	DashboardURL string
 }
 
 type Server struct {
 	response chan Response
-	context  config.Context
+	exports  *config.Exports
 }
 
 func NewServer(userInfo chan Response) *Server {
@@ -50,71 +48,23 @@ type Opts struct {
 
 	// DashboardURL is the web dashboard URL
 	DashboardURL string
-
-	// Client is an optional HTTP client which can be specified.
-	// If not provided defaults to http.DefaultClient.
-	Client Doer
 }
 
 // FromDashboardURL builds a local server for an OAuth2.0 login flow
 // looking up the CLI Client ID from the deployment public exports endpoint.
 func FromDashboardURL(ctx context.Context, opts Opts) (*Server, error) {
-	if opts.Client == nil {
-		opts.Client = http.DefaultClient
-	}
-
-	u, err := url.Parse(opts.DashboardURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "parsing dashboard URL")
-	}
-
-	// aws-exports.json is always in the root of the dashboard
-	u.Path = "aws-exports.json"
-
-	// fetch the aws-exports.json file containing the public app client info
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "building deployment exports request")
-	}
-
-	res, err := opts.Client.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "making deployment exports request")
-	}
-
-	var exp awsExports
-	err = json.NewDecoder(res.Body).Decode(&exp)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding deployment exports")
-	}
-
-	cognitoURL := url.URL{
-		Scheme: "https",
-		Host:   exp.Auth.Oauth.Domain,
-	}
-
-	authURL := cognitoURL
-	authURL.Path = "/oauth2/authorize"
-
-	tokenURL := cognitoURL
-	tokenURL.Path = "/oauth2/token"
-
-	apiURL, err := exp.APIURL()
-	if err != nil {
-		return nil, err
-	}
-
 	depCtx := config.Context{
-		AuthURL:      authURL.String(),
-		TokenURL:     tokenURL.String(),
 		DashboardURL: opts.DashboardURL,
-		ClientID:     exp.Auth.CliAppClientID,
-		APIURL:       apiURL,
+	}
+
+	exp, err := depCtx.FetchExports(ctx)
+	if err != nil {
+		return nil, errors.New("fetching deployment exports")
 	}
 
 	s := Server{
 		response: opts.Response,
-		context:  depCtx,
+		exports:  exp,
 	}
 
 	return &s, nil
@@ -132,11 +82,11 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) oauthConfig() *oauth2.Config {
 	return &oauth2.Config{
 		RedirectURL: "http://localhost:18900/auth/cognito/callback",
-		ClientID:    s.context.ClientID,
+		ClientID:    s.exports.ClientID,
 		Scopes:      []string{"openid", "email"},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  s.context.AuthURL,
-			TokenURL: s.context.TokenURL,
+			AuthURL:  s.exports.AuthURL,
+			TokenURL: s.exports.TokenURL,
 		},
 	}
 }
@@ -213,8 +163,8 @@ func (s *Server) getUserData(code string) (Response, error) {
 	t.AccessToken = IDToken
 
 	res := Response{
-		Token:   t,
-		Context: s.context,
+		Token:        t,
+		DashboardURL: s.exports.DashboardURL,
 	}
 
 	return res, nil

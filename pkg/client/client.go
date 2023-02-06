@@ -62,8 +62,12 @@ func FromConfig(ctx context.Context, cfg *config.Config) (*types.ClientWithRespo
 	if err != nil {
 		return nil, err
 	}
+	exp, err := depCtx.FetchExports(ctx) // fetch the aws-exports.json file containing the exported URLs
+	if err != nil {
+		return nil, err
+	}
 
-	return New(ctx, depCtx.APIURL, cfg.CurrentContext)
+	return New(ctx, exp.APIURL, cfg.CurrentContext)
 }
 
 // New creates a new client, specifying the URL and context directly.

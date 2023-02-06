@@ -15,11 +15,7 @@ type Config struct {
 }
 
 type Context struct {
-	AuthURL      string `toml:"auth_url"`
-	TokenURL     string `toml:"token_url"`
 	DashboardURL string `toml:"dashboard_url" json:"dashboard_url"`
-	APIURL       string `toml:"api_url" json:"api_url"`
-	ClientID     string `toml:"client_id" json:"client_id"`
 }
 
 // Current loads the current context as specified in the 'current_context' field in the config file.

@@ -95,7 +95,9 @@ var Login = cli.Command{
 
 			// update the config file
 			cfg.CurrentContext = "default"
-			cfg.Contexts["default"] = res.Context
+			cfg.Contexts["default"] = config.Context{
+				DashboardURL: res.DashboardURL,
+			}
 			err = config.Save(cfg)
 			if err != nil {
 				return err
