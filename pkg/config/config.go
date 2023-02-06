@@ -7,8 +7,11 @@ import (
 )
 
 type Config struct {
-	CurrentContext string             `toml:"current_context" json:"current_context"`
-	Contexts       map[string]Context `toml:"context" json:"context"`
+	CurrentContext string `toml:"current_context" json:"current_context"`
+	// Contexts allows multiple Common Fate tenancies to be switched between easily.
+	// We don't have official support for this yet in the CLI,
+	// but the config structure supports it so that it can be easily added in future.
+	Contexts map[string]Context `toml:"context" json:"context"`
 }
 
 type Context struct {
@@ -35,10 +38,33 @@ func (c Config) Current() (*Context, error) {
 	return &got, nil
 }
 
+// CurrentOrEmpty returns the current context,
+// or an empty context if it can't be found.
+func (c Config) CurrentOrEmpty() Context {
+	if c.Contexts == nil {
+		return Context{}
+	}
+	got, ok := c.Contexts[c.CurrentContext]
+	if !ok {
+		return Context{}
+	}
+	return got
+}
+
 // Default returns an empty config.
 func Default() *Config {
 	return &Config{
 		CurrentContext: "",
 		Contexts:       map[string]Context{},
 	}
+}
+
+// DashboardURLs returns all of the dashboard URLs available
+// across different contexts.
+func (c Config) DashboardURLs() []string {
+	var urls []string
+	for _, c := range c.Contexts {
+		urls = append(urls, c.DashboardURL)
+	}
+	return urls
 }

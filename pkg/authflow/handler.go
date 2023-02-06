@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"path"
 	"time"
 
 	"github.com/common-fate/cli/pkg/config"
@@ -68,7 +67,9 @@ func FromDashboardURL(ctx context.Context, opts Opts) (*Server, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing dashboard URL")
 	}
-	u.Path = path.Join(u.Path, "aws-exports.json")
+
+	// aws-exports.json is always in the root of the dashboard
+	u.Path = "aws-exports.json"
 
 	// fetch the aws-exports.json file containing the public app client info
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
@@ -194,7 +195,7 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 func (s *Server) getUserData(code string) (Response, error) {
 	// Use code to get token and get user info.
 	cfg := s.oauthConfig()
-	clio.Debugw("exchanging oauth code", "oauth.config", cfg)
+	clio.Debugw("exchanging oauth2 code", "oauth.config", cfg)
 
 	t, err := cfg.Exchange(context.Background(), code)
 	if err != nil {

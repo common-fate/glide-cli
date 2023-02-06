@@ -37,6 +37,7 @@ func Load() (*Config, error) {
 }
 
 func openConfigFile(filepath string) (*Config, error) {
+	clio.Debugw("loading config", "path", filepath)
 	file, err := os.Open(filepath)
 	if err != nil {
 		return nil, err

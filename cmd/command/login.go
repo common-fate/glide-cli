@@ -2,8 +2,10 @@ package command
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/common-fate/cli/pkg/authflow"
 	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/cli/pkg/tokenstore"
@@ -17,17 +19,36 @@ var Login = cli.Command{
 	Name:  "login",
 	Usage: "Log in to Common Fate",
 	Action: func(c *cli.Context) error {
-		url := c.Args().First()
-		if url == "" {
-			return errors.New("usage: cf login <DASHBOARD URL>")
-		}
-
-		ctx := c.Context
-
 		cfg, err := config.Load()
 		if err != nil {
 			return err
 		}
+
+		url := c.Args().First()
+		var manualPrompt bool
+		if url == "" {
+			manualPrompt = true
+			prompt := &survey.Input{
+				Message: "Your Common Fate dashboard URL",
+				Default: cfg.CurrentOrEmpty().DashboardURL,
+				Suggest: func(toComplete string) []string {
+					return cfg.DashboardURLs()
+				},
+			}
+			survey.AskOne(prompt, &url, survey.WithValidator(survey.Required))
+		}
+
+		if url == "" {
+			// if the user presses Control+C during the survery prompt, the url will still be empty
+			return errors.New("url was empty")
+		}
+
+		if manualPrompt {
+			// display a hint to the user
+			clio.Infof("log in faster next time by running: 'cf login %s'", url)
+		}
+
+		ctx := c.Context
 
 		authResponse := make(chan authflow.Response)
 
@@ -93,7 +114,8 @@ var Login = cli.Command{
 		// open the browser and read the token
 		g.Go(func() error {
 			u := "http://localhost:18900/auth/cognito/login"
-			clio.Infof("Opening your browser to %s", u)
+			clio.Infof("Press Enter to open your web browser to: %s", u)
+			fmt.Scanln()
 			err := browser.OpenURL(u)
 			if err != nil {
 				clio.Errorf("error opening browser: %s", err)
