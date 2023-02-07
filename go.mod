@@ -7,7 +7,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/BurntSushi/toml v1.2.1
 	github.com/common-fate/clio v1.1.0
-	github.com/common-fate/common-fate v0.12.3-0.20230125132828-d6185b3c8297
+	github.com/common-fate/common-fate v0.12.3-0.20230207174901-f77a0fc12224
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
 	github.com/urfave/cli/v2 v2.24.1

@@ -11,8 +11,8 @@ github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2/go.mod h1:HBCaDe
 github.com/benbjohnson/clock v1.3.0 h1:ip6w0uFQkncKQ979AypyG0ER7mqUSBdKLOgAle/AT8A=
 github.com/common-fate/clio v1.1.0 h1:M5fyMuYHjB+qODYbl0IGT28SBiokxsIlxluUVnD8cOQ=
 github.com/common-fate/clio v1.1.0/go.mod h1:BYm9XmDIsmpQQdw+xbhQO5hbpUhH03Lk6gQmQ6Wpu1k=
-github.com/common-fate/common-fate v0.12.3-0.20230125132828-d6185b3c8297 h1:TKrBP+OoLP8AgHn9GGbqGTmHVG5yUrNUBxUNpVwf65M=
-github.com/common-fate/common-fate v0.12.3-0.20230125132828-d6185b3c8297/go.mod h1:8QmWR7HqYklL0/V1aQcMBJdDlCxLXwiVbx28tnv5Ftw=
+github.com/common-fate/common-fate v0.12.3-0.20230207174901-f77a0fc12224 h1:ccpXnftGV/+OwScInTdjWfLD3IM84JFlLqPutEXu6p8=
+github.com/common-fate/common-fate v0.12.3-0.20230207174901-f77a0fc12224/go.mod h1:GVuNSo1qifYUt5Q51RAE7IoxUfybALkUXj4OJzYOFt0=
 github.com/common-fate/iso8601 v1.0.2 h1:gl6iNbE8TnJzg+lYJxPNYOkF+oHYde2K2s2i+5o4yHE=
 github.com/common-fate/iso8601 v1.0.2/go.mod h1:DU4mvUEkkWZUUSJq2aCuNqM1luSb0Pwyb2dLzXS+img=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
