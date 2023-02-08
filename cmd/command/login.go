@@ -45,7 +45,7 @@ var Login = cli.Command{
 
 		if manualPrompt {
 			// display a hint to the user
-			clio.Infof("log in faster next time by running: 'cf login %s'", url)
+			clio.Infof("log in faster next time by running: '%s %s %s'", c.App.Name, c.Command.FullName(), url)
 		}
 
 		ctx := c.Context

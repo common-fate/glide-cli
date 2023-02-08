@@ -28,7 +28,7 @@ func (s Source) GetProfiles(ctx context.Context) ([]awsconfigfile.SSOProfile, er
 		return nil, err
 	}
 
-	cf, err := client.FromConfig(ctx, cfg, s.LoginCommand)
+	cf, err := client.FromConfig(ctx, cfg, client.WithLoginHint(s.LoginCommand))
 	if err != nil {
 		return nil, err
 	}
