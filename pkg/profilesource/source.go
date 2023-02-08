@@ -63,6 +63,7 @@ func (s Source) GetProfiles(ctx context.Context) ([]awsconfigfile.SSOProfile, er
 					RoleName:      ps.Label,
 					SSOStartURL:   s.StartURL,
 					SSORegion:     s.SSORegion,
+					GeneratedFrom: "commonfate",
 					CommonFateURL: depCtx.DashboardURL,
 				}
 				profiles = append(profiles, p)
