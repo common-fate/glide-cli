@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/common-fate/cli/cmd/command"
-	"github.com/common-fate/cli/cmd/command/aws"
 	"github.com/common-fate/cli/cmd/command/rules"
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/clio"
@@ -23,7 +22,7 @@ func main() {
 			&command.Login,
 			&command.Logout,
 			&rules.Command,
-			&aws.Command,
+			&command.Get,
 		},
 	}
 	clio.SetLevelFromEnv("CF_LOG")
