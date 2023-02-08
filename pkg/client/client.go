@@ -11,6 +11,7 @@ import (
 	"github.com/common-fate/cli/pkg/tokenstore"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
+	"github.com/common-fate/useragent"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
@@ -23,6 +24,12 @@ type ErrorHandlingClient struct {
 }
 
 func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
+	// add a user agent to the request
+	ua := useragent.FromContext(req.Context())
+	if ua != "" {
+		req.Header.Add("User-Agent", ua)
+	}
+
 	res, err := rd.Client.Do(req)
 	var ne *url.Error
 	if errors.As(err, &ne) && ne.Err == tokenstore.ErrNotFound {
@@ -57,7 +64,7 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 // FromConfig creates a new client from a Common Fate CLI config.
 // The client loads the OAuth2.0 tokens from the system keychain.
 // The client automatically refreshes the access token if it is expired.
-func FromConfig(ctx context.Context, cfg *config.Config) (*types.ClientWithResponses, error) {
+func FromConfig(ctx context.Context, cfg *config.Config, loginCommand string) (*types.ClientWithResponses, error) {
 	depCtx, err := cfg.Current()
 	if err != nil {
 		return nil, err
@@ -67,16 +74,16 @@ func FromConfig(ctx context.Context, cfg *config.Config) (*types.ClientWithRespo
 		return nil, err
 	}
 
-	return New(ctx, exp.APIURL, cfg.CurrentContext)
+	return New(ctx, exp.APIURL, cfg.CurrentContext, loginCommand)
 }
 
 // New creates a new client, specifying the URL and context directly.
 // The client loads the OAuth2.0 tokens from the system keychain.
 // The client automatically refreshes the access token if it is expired.
-func New(ctx context.Context, server, context string) (*types.ClientWithResponses, error) {
+func New(ctx context.Context, server, context, loginCommand string) (*types.ClientWithResponses, error) {
 	ts := tokenstore.New(context)
 	oauthClient := oauth2.NewClient(ctx, &ts)
-	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginCommand: "cf login"}
+	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginCommand: loginCommand}
 
 	return types.NewClientWithResponses(server, types.WithHTTPClient(httpClient))
 }

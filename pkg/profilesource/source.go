@@ -12,8 +12,9 @@ import (
 // Source reads available AWS SSO profiles from the Common Fate API.
 // It implements the awsconfigfile.Source interface
 type Source struct {
-	SSORegion string
-	StartURL  string
+	SSORegion    string
+	StartURL     string
+	LoginCommand string
 }
 
 func (s Source) GetProfiles(ctx context.Context) ([]awsconfigfile.SSOProfile, error) {
@@ -27,7 +28,7 @@ func (s Source) GetProfiles(ctx context.Context) ([]awsconfigfile.SSOProfile, er
 		return nil, err
 	}
 
-	cf, err := client.FromConfig(ctx, cfg)
+	cf, err := client.FromConfig(ctx, cfg, s.LoginCommand)
 	if err != nil {
 		return nil, err
 	}

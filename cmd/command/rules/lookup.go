@@ -25,7 +25,7 @@ var lookup = cli.Command{
 			return err
 		}
 
-		cf, err := client.FromConfig(ctx, cfg)
+		cf, err := client.FromConfig(ctx, cfg, "cf login")
 		if err != nil {
 			return err
 		}
