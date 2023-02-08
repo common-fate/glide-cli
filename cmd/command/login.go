@@ -2,7 +2,6 @@ package command
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -116,8 +115,7 @@ var Login = cli.Command{
 		// open the browser and read the token
 		g.Go(func() error {
 			u := "http://localhost:18900/auth/cognito/login"
-			clio.Infof("Press Enter to open your web browser to: %s", u)
-			fmt.Scanln()
+			clio.Infof("Opening your web browser to: %s", u)
 			err := browser.OpenURL(u)
 			if err != nil {
 				clio.Errorf("error opening browser: %s", err)
