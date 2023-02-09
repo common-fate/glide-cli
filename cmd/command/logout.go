@@ -7,31 +7,23 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func Logout(opts ...func(*LoginOpts)) *cli.Command {
-	var o LoginOpts
-	for _, opt := range opts {
-		opt(&o)
-	}
+var Logout = cli.Command{
+	Name:  "logout",
+	Usage: "Log out of Common Fate",
+	Action: func(c *cli.Context) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
 
-	cmd := cli.Command{
-		Name:  "logout",
-		Usage: "Log out of Common Fate",
-		Action: func(c *cli.Context) error {
-			cfg, err := config.Load()
-			if err != nil {
-				return err
-			}
+		ts := tokenstore.New(cfg.CurrentContext)
+		err = ts.Clear()
+		if err != nil {
+			return err
+		}
 
-			ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(o.Keyring))
-			err = ts.Clear()
-			if err != nil {
-				return err
-			}
+		clio.Success("logged out")
 
-			clio.Success("logged out")
-
-			return nil
-		},
-	}
-	return &cmd
+		return nil
+	},
 }
