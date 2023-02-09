@@ -8,6 +8,20 @@ import (
 	"github.com/common-fate/clio"
 )
 
+// CurrentContext is a shorthand function which
+// calls Load() to load the configuration,
+// and then calls cfg.Current()
+// to get the current API context.
+// It returns an error if either method fails.
+func CurrentContext() (*Context, error) {
+	cfg, err := Load()
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg.Current()
+}
+
 func Load() (*Config, error) {
 	// if COMMONFATE_CONFIG_FILE is set, use a custom file path
 	// for the config file location.

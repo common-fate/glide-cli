@@ -11,14 +11,34 @@ type Storage struct {
 	Context string
 }
 
+type Opts struct {
+	// Keyring is a custom keyring to use rather than
+	// the default one, which is configured with
+	// environment variables.
+	Keyring keyring.Keyring
+}
+
+// WithKeyring specifies a custom keyring to use.
+func WithKeyring(k keyring.Keyring) func(o *Opts) {
+	return func(o *Opts) {
+		o.Keyring = k
+	}
+}
+
 // New creates a new token storage driver.
 // The context is the authentication context to use.
 // This is usually 'default' and in future can be
 // expanded to allow CLI users to switch between
 // separate Common Fate tenancies.
-func New(context string) Storage {
+func New(context string, opts ...func(*Opts)) Storage {
+
+	var o Opts
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	return Storage{
-		keyring: cfKeyring{},
+		keyring: cfKeyring{keyring: o.Keyring},
 		Context: context,
 	}
 }

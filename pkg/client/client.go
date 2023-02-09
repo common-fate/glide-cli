@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/99designs/keyring"
 	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/cli/pkg/tokenstore"
 	"github.com/common-fate/clio/clierr"
@@ -64,11 +65,21 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 type ClientOpts struct {
 	// LoginHint is the login command which will be shown to the user if there are any auth errors.
 	LoginHint string
+	Keyring   keyring.Keyring
 }
 
 func WithLoginHint(hint string) func(co *ClientOpts) {
 	return func(co *ClientOpts) {
 		co.LoginHint = hint
+	}
+}
+
+// WithKeyring configures the client to use a custom keyring,
+// rather than the default one configured using
+// 'COMMONFATE_' environment variables
+func WithKeyring(k keyring.Keyring) func(co *ClientOpts) {
+	return func(co *ClientOpts) {
+		co.Keyring = k
 	}
 }
 
@@ -100,9 +111,12 @@ func New(ctx context.Context, server, context string, opts ...func(co *ClientOpt
 		o(co)
 	}
 
-	ts := tokenstore.New(context)
+	ts := tokenstore.New(context, tokenstore.WithKeyring(co.Keyring))
 	oauthClient := oauth2.NewClient(ctx, &ts)
 	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginHint: co.LoginHint}
 
 	return types.NewClientWithResponses(server, types.WithHTTPClient(httpClient))
 }
+
+// Client is an alias for the exported Go SDK client type
+type Client = types.ClientWithResponses

@@ -13,7 +13,11 @@ import (
 // cfKeyring is a wrapper around 99designs/keyring
 // that handles config via env vars and
 // marshalling/unmarshalling of items.
-type cfKeyring struct{}
+type cfKeyring struct {
+	// keyring is an existing keyring to use.
+	// if nil, a new keyring is created using the openKeyring() method.
+	keyring keyring.Keyring
+}
 
 // returns false if the key is not found, true if it is found, or false and an error if there was a keyring related error
 func (s *cfKeyring) HasKey(key string) (bool, error) {
@@ -98,6 +102,11 @@ func (s *cfKeyring) ListKeys() ([]string, error) {
 }
 
 func (s *cfKeyring) openKeyring() (keyring.Keyring, error) {
+	// return the existing keyring if there's one set.
+	if s.keyring != nil {
+		return s.keyring, nil
+	}
+
 	name := os.Getenv("COMMONFATE_KEYRING_NAME")
 	if name == "" {
 		name = "commonfate"
