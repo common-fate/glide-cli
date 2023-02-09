@@ -23,12 +23,12 @@ type Context struct {
 // any contexts defined in the config file.
 func (c Config) Current() (*Context, error) {
 	if c.Contexts == nil {
-		return nil, clierr.New("No contexts were found in Common Fate config file.", clierr.Infof("To log in to Common Fate, run: 'cf login'"))
+		return nil, clierr.New("No contexts were found in Common Fate config file.")
 	}
 
 	got, ok := c.Contexts[c.CurrentContext]
 	if !ok {
-		return nil, clierr.New(fmt.Sprintf("Could not find context '%s' in Common Fate config file", c.CurrentContext), clierr.Infof("To log in to Common Fate, run: 'cf login'"))
+		return nil, clierr.New(fmt.Sprintf("Could not find context '%s' in Common Fate config file", c.CurrentContext))
 	}
 
 	return &got, nil
