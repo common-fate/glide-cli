@@ -79,7 +79,7 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 		Handler: authServer.Handler(),
 	}
 
-	ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(o.Keyring))
+	ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(lf.Keyring))
 
 	// run the auth server on localhost
 	g.Go(func() error {
