@@ -43,9 +43,6 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 		prompt := &survey.Input{
 			Message: "Your Common Fate dashboard URL",
 			Default: cfg.CurrentOrEmpty().DashboardURL,
-			Suggest: func(toComplete string) []string {
-				return cfg.DashboardURLs()
-			},
 		}
 		survey.AskOne(prompt, &url, survey.WithValidator(survey.Required))
 	}
