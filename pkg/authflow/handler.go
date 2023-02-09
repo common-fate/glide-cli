@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/common-fate/cli/pkg/config"
@@ -53,8 +54,18 @@ type Opts struct {
 // FromDashboardURL builds a local server for an OAuth2.0 login flow
 // looking up the CLI Client ID from the deployment public exports endpoint.
 func FromDashboardURL(ctx context.Context, opts Opts) (*Server, error) {
+	u, err := url.Parse(opts.DashboardURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing dashboard url")
+	}
+
+	// force https scheme, in case the user just entered the domain without it.
+	u.Scheme = "https"
+
+	clio.Infof("logging in to %s", u.String())
+
 	depCtx := config.Context{
-		DashboardURL: opts.DashboardURL,
+		DashboardURL: u.String(),
 	}
 
 	exp, err := depCtx.FetchExports(ctx)
