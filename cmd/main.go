@@ -19,8 +19,8 @@ func main() {
 		UsageText: "cf [options] [command]",
 		Version:   build.Version,
 		Commands: []*cli.Command{
-			&command.Login,
-			&command.Logout,
+			command.Login(),
+			command.Logout(),
 			&rules.Command,
 		},
 	}
