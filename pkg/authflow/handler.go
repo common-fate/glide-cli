@@ -70,7 +70,7 @@ func FromDashboardURL(ctx context.Context, opts Opts) (*Server, error) {
 
 	exp, err := depCtx.FetchExports(ctx)
 	if err != nil {
-		return nil, errors.New("fetching deployment exports")
+		return nil, errors.Wrap(err, "fetching deployment exports")
 	}
 
 	s := Server{
