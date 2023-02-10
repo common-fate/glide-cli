@@ -28,6 +28,8 @@ var defaultLoginFlow LoginFlow
 type LoginFlow struct {
 	// Keyring optionally overrides the keyring that auth tokens are saved to.
 	Keyring keyring.Keyring
+	// ForceInteractive forces the survey prompt to appear
+	ForceInteractive bool
 }
 
 func (lf LoginFlow) LoginAction(c *cli.Context) error {
@@ -35,8 +37,12 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	var url string
+	if !lf.ForceInteractive {
+		// try and read the URL from the first provided argument
+		url = c.Args().First()
+	}
 
-	url := c.Args().First()
 	var manualPrompt bool
 	if url == "" {
 		manualPrompt = true
