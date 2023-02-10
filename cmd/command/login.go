@@ -82,8 +82,6 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 		Handler: authServer.Handler(),
 	}
 
-	ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(lf.Keyring))
-
 	// run the auth server on localhost
 	g.Go(func() error {
 		clio.Debugw("starting HTTP server", "address", server.Addr)
@@ -118,6 +116,7 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 			return err
 		}
 
+		ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(lf.Keyring))
 		err = ts.Save(res.Token)
 		if err != nil {
 			return err
