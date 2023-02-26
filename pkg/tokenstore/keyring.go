@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/99designs/keyring"
+	"github.com/common-fate/clio"
 
 	"github.com/pkg/errors"
 )
@@ -104,6 +105,7 @@ func (s *cfKeyring) ListKeys() ([]string, error) {
 func (s *cfKeyring) openKeyring() (keyring.Keyring, error) {
 	// return the existing keyring if there's one set.
 	if s.keyring != nil {
+		clio.Debug("existing keyring has been set: returning")
 		return s.keyring, nil
 	}
 
@@ -147,9 +149,15 @@ func (s *cfKeyring) openKeyring() (keyring.Keyring, error) {
 		kab = strings.ReplaceAll(kab, " ", "") // remove any spaces
 		backends := strings.Split(kab, ",")
 
+		clio.Debugw("setting allowed keyring backends", "backends", backends)
+
 		for _, b := range backends {
 			c.AllowedBackends = append(c.AllowedBackends, keyring.BackendType(b))
 		}
+	} else {
+		backends := keyring.AvailableBackends()
+		clio.Debugw("setting default keyring backends", "backends", backends)
+		c.AllowedBackends = backends
 	}
 
 	if strings.ToLower(os.Getenv("COMMONFATE_KEYRING_DEBUG")) == "true" {
