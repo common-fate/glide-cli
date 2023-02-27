@@ -51,11 +51,12 @@ type apiExports struct {
 // Exports are public configuration variables
 // related to a Common Fate tenancy.
 type Exports struct {
-	AuthURL      string `toml:"auth_url" json:"auth_url"`
-	TokenURL     string `toml:"token_url" json:"token_url"`
-	APIURL       string `toml:"api_url" json:"api_url"`
-	ClientID     string `toml:"client_id" json:"client_id"`
-	DashboardURL string `toml:"dashboard_url" json:"dashboard_url"`
+	AuthURL        string `toml:"auth_url" json:"auth_url"`
+	TokenURL       string `toml:"token_url" json:"token_url"`
+	APIURL         string `toml:"api_url" json:"api_url"`
+	RegistryAPIURL string `toml:"registry_api_url" json:"registry_api_url"`
+	ClientID       string `toml:"client_id" json:"client_id"`
+	DashboardURL   string `toml:"dashboard_url" json:"dashboard_url"`
 }
 
 // FetchExports fetches and parses the aws-exports.json
