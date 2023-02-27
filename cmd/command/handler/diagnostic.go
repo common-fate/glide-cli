@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/common-fate/cli/pkg/client"
+	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio/clierr"
-	"github.com/common-fate/common-fate/pkg/types"
 	"github.com/olekukonko/tablewriter"
 	"github.com/urfave/cli/v2"
 )
@@ -22,7 +23,12 @@ var DiagnosticCommand = cli.Command{
 	Action: cli.ActionFunc(func(c *cli.Context) error {
 		ctx := c.Context
 		id := c.String("id")
-		cfApi, err := types.NewClientWithResponses("http://0.0.0.0:8080")
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
+
+		cfApi, err := client.FromConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}

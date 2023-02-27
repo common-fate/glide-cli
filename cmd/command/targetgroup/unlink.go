@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/common-fate/cli/pkg/client"
+	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
@@ -20,7 +22,12 @@ var UnlinkCommand = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
-		cfApi, err := types.NewClientWithResponses("http://0.0.0.0:8080")
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
+
+		cfApi, err := client.FromConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}
