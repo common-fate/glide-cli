@@ -16,8 +16,10 @@ var Command = cli.Command{
 	Usage:       "Manage handlers",
 	Subcommands: []*cli.Command{
 		&RegisterCommand,
+		&ValidateCommand,
 		&ListCommand,
 		&DiagnosticCommand,
+		&LogsCommand,
 	},
 }
 

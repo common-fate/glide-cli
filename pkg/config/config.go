@@ -15,8 +15,9 @@ type Config struct {
 }
 
 type Context struct {
-	DashboardURL string `toml:"dashboard_url" json:"dashboard_url"`
-	APIURL       string `toml:"api_url,omitempty" json:"api_url,omitempty"`
+	DashboardURL   string `toml:"dashboard_url" json:"dashboard_url"`
+	APIURL         string `toml:"api_url,omitempty" json:"api_url,omitempty"`
+	RegistryAPIURL string `toml:"registry_api_url,omitempty" json:"registry_api_url,omitempty"`
 }
 
 // Keys are all of the allowed keys in the Context section.

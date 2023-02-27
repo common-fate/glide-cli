@@ -4,8 +4,10 @@ import (
 	"os"
 
 	"github.com/common-fate/cli/cmd/command"
+	"github.com/common-fate/cli/cmd/command/bootstrap"
 	"github.com/common-fate/cli/cmd/command/config"
 	"github.com/common-fate/cli/cmd/command/handler"
+	"github.com/common-fate/cli/cmd/command/provider"
 	"github.com/common-fate/cli/cmd/command/rules"
 	"github.com/common-fate/cli/cmd/command/targetgroup"
 	"github.com/common-fate/cli/internal/build"
@@ -28,6 +30,8 @@ func main() {
 			&command.Login,
 			&command.Logout,
 			&rules.Command,
+			&bootstrap.Command,
+			&provider.Command,
 			&targetgroup.Command,
 			&config.Command,
 			&handler.Command,
