@@ -16,7 +16,7 @@ var DeleteCommand = cli.Command{
 	Description: "Delete handlers",
 	Usage:       "Delete handlers",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "handler-id", Aliases: []string{"h"}, Required: true},
+		&cli.StringFlag{Name: "id", Required: true},
 	},
 	Action: cli.ActionFunc(func(c *cli.Context) error {
 		ctx := c.Context
@@ -29,13 +29,13 @@ var DeleteCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-		res, err := cfApi.AdminDeleteHandlerWithResponse(ctx, c.String("handler-id"))
+		res, err := cfApi.AdminDeleteHandlerWithResponse(ctx, c.String("id"))
 		if err != nil {
 			return err
 		}
 		switch res.StatusCode() {
 		case http.StatusOK:
-			clio.Infow("Deleted handler", "handlerId: ", res.JSON200.Id)
+			clio.Success("Deleted handler", res.JSON200.Id)
 		case http.StatusUnauthorized:
 			return errors.New(res.JSON401.Error)
 		case http.StatusInternalServerError:
