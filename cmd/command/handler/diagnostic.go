@@ -61,7 +61,7 @@ var DiagnosticCommand = cli.Command{
 
 			for _, d := range res.JSON200.Diagnostics {
 				table.Append([]string{
-					d.Level, d.Message,
+					d.Message,
 				})
 			}
 			table.Render()
