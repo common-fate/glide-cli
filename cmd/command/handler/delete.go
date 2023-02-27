@@ -35,7 +35,7 @@ var DeleteCommand = cli.Command{
 		}
 		switch res.StatusCode() {
 		case http.StatusNoContent:
-			clio.Success("Deleted handler")
+			clio.Success("Deleted handler ", c.String("id"))
 		case http.StatusUnauthorized:
 			return errors.New(res.JSON401.Error)
 		case http.StatusInternalServerError:
