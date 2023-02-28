@@ -35,6 +35,7 @@ func main() {
 			&targetgroup.Command,
 			&config.Command,
 			&handler.Command,
+			&command.GenerateCfOutput,
 		},
 	}
 	clio.SetLevelFromEnv("CF_LOG")
