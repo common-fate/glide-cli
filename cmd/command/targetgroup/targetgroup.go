@@ -13,5 +13,6 @@ var Command = cli.Command{
 		&LinkCommand,
 		&UnlinkCommand,
 		&ListCommand,
+		&DeleteCommand,
 	},
 }
