@@ -34,7 +34,7 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 	res, err := rd.Client.Do(req)
 	var ne *url.Error
 	if errors.As(err, &ne) && ne.Err == tokenstore.ErrNotFound {
-		return nil, clierr.New(fmt.Sprintf("To get started with Common Fate, please run: '%s'", rd.LoginHint))
+		return nil, clierr.New(fmt.Sprintf("%s.\nTo get started with Common Fate, please run: '%s'", err, rd.LoginHint))
 	}
 	if err != nil {
 		return nil, err

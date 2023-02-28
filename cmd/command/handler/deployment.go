@@ -20,6 +20,7 @@ var Command = cli.Command{
 		&ListCommand,
 		&DiagnosticCommand,
 		&LogsCommand,
+		&DeleteCommand,
 	},
 }
 

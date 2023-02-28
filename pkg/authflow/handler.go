@@ -60,7 +60,12 @@ func FromDashboardURL(ctx context.Context, opts Opts) (*Server, error) {
 	}
 
 	// force https scheme, in case the user just entered the domain without it.
-	u.Scheme = "https"
+
+	clio.Info(u.Hostname())
+	if u.Hostname() != "localhost" {
+		u.Scheme = "https"
+
+	}
 
 	clio.Infof("logging in to %s", u.String())
 
