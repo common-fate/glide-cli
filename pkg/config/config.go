@@ -15,8 +15,13 @@ type Config struct {
 }
 
 type Context struct {
-	DashboardURL string `toml:"dashboard_url" json:"dashboard_url"`
+	DashboardURL   string `toml:"dashboard_url" json:"dashboard_url"`
+	APIURL         string `toml:"api_url,omitempty" json:"api_url,omitempty"`
+	RegistryAPIURL string `toml:"registry_api_url,omitempty" json:"registry_api_url,omitempty"`
 }
+
+// Keys are all of the allowed keys in the Context section.
+var Keys = []string{"dashboard_url", "api_url"}
 
 // Current loads the current context as specified in the 'current_context' field in the config file.
 // It returns an error if there are no contexts, or if the 'current_context' field doesn't match

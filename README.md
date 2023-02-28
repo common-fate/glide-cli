@@ -33,3 +33,11 @@ Where the `dashboard_url` field is the frontend dashboard URL for a Common Fate 
 To determine the backend API URL, the CLI queries for the `aws-exports.json` file in the dashboard - e.g. https://commonfate.example.com/aws-exports.json. This JSON file contains the API URL, and is the same file that is used by our frontend web app to determine the API URL.
 
 You can find this logic in `pkg/config` in this repository.
+
+## Running in local development
+
+Set the API URL to your localhost:
+
+```
+cf config set api_url http://localhost:8080
+```

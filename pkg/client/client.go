@@ -66,11 +66,23 @@ type ClientOpts struct {
 	// LoginHint is the login command which will be shown to the user if there are any auth errors.
 	LoginHint string
 	Keyring   keyring.Keyring
+	APIURL    string
 }
 
 func WithLoginHint(hint string) func(co *ClientOpts) {
 	return func(co *ClientOpts) {
 		co.LoginHint = hint
+	}
+}
+
+// WithAPIURL overrides the API URL.
+// If the url is empty, it is not overriden and the regular
+// API URL from aws-exports.json is used instead.
+//
+// This can be used for local development to provider a localhost URL.
+func WithAPIURL(url string) func(co *ClientOpts) {
+	return func(co *ClientOpts) {
+		co.APIURL = url
 	}
 }
 
@@ -91,6 +103,12 @@ func FromConfig(ctx context.Context, cfg *config.Config, opts ...func(co *Client
 	if err != nil {
 		return nil, err
 	}
+
+	// if we have an API URL in the config file, use that rather than fetching it from the exports endpoint.
+	if depCtx.APIURL != "" {
+		return New(ctx, depCtx.APIURL, cfg.CurrentContext, opts...)
+	}
+
 	exp, err := depCtx.FetchExports(ctx) // fetch the aws-exports.json file containing the exported URLs
 	if err != nil {
 		return nil, err
