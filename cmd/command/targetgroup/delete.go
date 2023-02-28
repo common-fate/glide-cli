@@ -8,7 +8,6 @@ import (
 	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
-	"github.com/common-fate/common-fate/pkg/types"
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,7 +16,7 @@ var DeleteCommand = cli.Command{
 	Description: "Delete a target group",
 	Usage:       "Delete a target group",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "target-group", Required: true},
+		&cli.StringFlag{Name: "id", Required: true},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
@@ -31,15 +30,13 @@ var DeleteCommand = cli.Command{
 			return err
 		}
 
-		res, err := cfApi.AdminRemoveTargetGroupLinkWithResponse(ctx, c.String("target-group"), &types.AdminRemoveTargetGroupLinkParams{
-			DeploymentId: c.String("deployment"),
-		})
+		res, err := cfApi.AdminDeleteTargetGroupWithResponse(ctx, c.String("id"))
 		if err != nil {
 			return err
 		}
 		switch res.StatusCode() {
-		case http.StatusOK:
-			clio.Successf("Unlinked deployment %s from group %s", c.String("deployment"), c.String("target-group"))
+		case http.StatusNoContent:
+			clio.Successf("Deleted target group %s", c.String("id"))
 		case http.StatusUnauthorized:
 			return errors.New(res.JSON401.Error)
 		case http.StatusNotFound:

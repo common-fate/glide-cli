@@ -244,6 +244,10 @@ github.com/common-fate/common-fate v0.13.3-0.20230227041008-217dd962d026 h1:eYSo
 github.com/common-fate/common-fate v0.13.3-0.20230227041008-217dd962d026/go.mod h1:GKQpqP4z/1MpjqT7bTDf+Zq1wXksN47YApZBBrTWNaI=
 github.com/common-fate/common-fate v0.13.3-0.20230227063102-7ffd3c143002 h1:WIhEcaGJksMY60RFAQI+b1C0C9jAU8j8+04CEUcAfDQ=
 github.com/common-fate/common-fate v0.13.3-0.20230227063102-7ffd3c143002/go.mod h1:GKQpqP4z/1MpjqT7bTDf+Zq1wXksN47YApZBBrTWNaI=
+github.com/common-fate/common-fate v0.13.3-0.20230228022646-934b1edbe4af h1:h9U85GlMQAUeivZuIrV14az4h1AGYLHYrlIFxe6YN2c=
+github.com/common-fate/common-fate v0.13.3-0.20230228022646-934b1edbe4af/go.mod h1:GKQpqP4z/1MpjqT7bTDf+Zq1wXksN47YApZBBrTWNaI=
+github.com/common-fate/common-fate v0.13.3-0.20230228024841-435fe9171eee h1:1ZTAfA2nG7LRT/I5WLl2vaWbuLbM4TKVelXHLl1fvMs=
+github.com/common-fate/common-fate v0.13.3-0.20230228024841-435fe9171eee/go.mod h1:GKQpqP4z/1MpjqT7bTDf+Zq1wXksN47YApZBBrTWNaI=
 github.com/common-fate/ddb v0.15.0 h1:JZTI5rb7Roogf+dPnF2rUo9RTfH5WYvOafD3mdRxBHs=
 github.com/common-fate/ddb v0.15.0/go.mod h1:W68x78n2NUERIGjYyl6nPTyvLSlqYSdVO3Fk1gMGaKE=
 github.com/common-fate/frontmatter v0.0.0-20220825121704-2d2ec51f9c73 h1:JZt+aGTp9AghUxzIQ5M1sDvpiyAi857P2DkbmY19KpI=
