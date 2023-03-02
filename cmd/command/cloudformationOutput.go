@@ -62,7 +62,7 @@ var GenerateCfOutput = cli.Command{
 		ctx := c.Context
 		bootstrapBucket := c.String("bootstrap-bucket")
 		handlerId := c.String("handler-id")
-		commonfateAWSAccountId := c.String("commonfate-account-id")
+		commonFateAWSAccountId := c.String("commonfate-account-id")
 		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
 		if err != nil {
 			return errors.New("error configuring provider registry client")
@@ -105,7 +105,7 @@ var GenerateCfOutput = cli.Command{
 
 			values["BootstrapBucketName"] = bootstrapBucket
 			values["HandlerID"] = handlerId
-			values["CommonfateAWSAccountId"] = commonfateAWSAccountId
+			values["CommonFateAWSAccountId"] = commonFateAWSAccountId
 			lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
 			values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
 
@@ -154,13 +154,13 @@ var GenerateCfOutput = cli.Command{
 
 			}
 
-			if commonfateAWSAccountId == "" {
+			if commonFateAWSAccountId == "" {
 				var v string
 				err = survey.AskOne(&survey.Input{Message: "enter the account Id of the account where commonfate is deployed:"}, &v)
 				if err != nil {
 					return err
 				}
-				values["CommonfateAWSAccountID"] = v
+				values["CommonFateAWSAccountID"] = v
 			}
 
 			values["HandlerId"] = handlerId
