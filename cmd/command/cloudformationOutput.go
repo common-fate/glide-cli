@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/service/targetsvc"
@@ -49,22 +50,25 @@ var GenerateCfOutput = cli.Command{
 	Name:  "generate-cf-output",
 	Usage: "Generate cloudformation output",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true, Usage: "publisher/name@version"},
+		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
+		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The Id of the handler e.g aws-sso"},
 		&cli.StringFlag{Name: "bootstrap-bucket", Required: true},
-		&cli.StringFlag{Name: "stackname", Usage: "the name of the cloudformation stack"},
-		&cli.StringFlag{Name: "accountId"},
-		&cli.StringFlag{Name: "region", Usage: "the location where cloudformation is deployed"},
-		&cli.StringFlag{Name: "registry-api-url", Value: "http://localhost:9001", EnvVars: []string{"COMMONFATE_PROVIDER_REGISTRY_API_URL"}, Hidden: true},
+		&cli.StringFlag{Name: "stackname", Usage: "The name of the cloudformation stack"},
+		&cli.StringFlag{Name: "commonfate-account-id", Usage: "The AWS account where Common Fate is deployed"},
+		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler"},
+		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
 		bootstrapBucket := c.String("bootstrap-bucket")
-		registryClient, err := providerregistrysdk.NewClientWithResponses("http://localhost:9001")
+		handlerId := c.String("handler-id")
+		commonFateAWSAccountId := c.String("commonfate-account-id")
+		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
 		if err != nil {
 			return errors.New("error configuring provider registry client")
 		}
 
-		provider, err := targetsvc.SplitProviderString(c.String("id"))
+		provider, err := targetsvc.SplitProviderString(c.String("provider-id"))
 		if err != nil {
 			return err
 		}
@@ -83,7 +87,7 @@ var GenerateCfOutput = cli.Command{
 		case http.StatusOK:
 			var stackname = c.String("stackname")
 			if stackname == "" {
-				err = survey.AskOne(&survey.Input{Message: "enter the cloudformation stackname:"}, &stackname)
+				err = survey.AskOne(&survey.Input{Message: "enter the cloudformation stackname:", Default: handlerId}, &stackname)
 				if err != nil {
 					return err
 				}
@@ -100,6 +104,8 @@ var GenerateCfOutput = cli.Command{
 			values := make(map[string]string)
 
 			values["BootstrapBucketName"] = bootstrapBucket
+			values["HandlerID"] = handlerId
+			values["CommonFateAWSAccountId"] = commonFateAWSAccountId
 			lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
 			values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
 
@@ -115,7 +121,7 @@ var GenerateCfOutput = cli.Command{
 					client := ssm.NewFromConfig(awsCfg)
 
 					var secret string
-					name := createUniqueProviderSSMName(provider, k)
+					name := createUniqueProviderSSMName(handlerId, k)
 					helpMsg := fmt.Sprintf("This will be stored in aws system manager parameter store with name '%s'", name)
 					err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
 					if err != nil {
@@ -132,7 +138,7 @@ var GenerateCfOutput = cli.Command{
 						return err
 					}
 
-					clio.Successf("Added to aws system manager parameter store with name '%s", name)
+					clio.Successf("Added to AWS System Manager Parameter Store with name '%s'", name)
 
 					values[ConvertToPascalCase(k)] = name
 
@@ -148,14 +154,16 @@ var GenerateCfOutput = cli.Command{
 
 			}
 
-			var v string
-			err = survey.AskOne(&survey.Input{Message: "enter the account Id of the account where commonfate is deployed:"}, &v)
-			if err != nil {
-				return err
+			if commonFateAWSAccountId == "" {
+				var v string
+				err = survey.AskOne(&survey.Input{Message: "enter the account Id of the account where commonfate is deployed:"}, &v)
+				if err != nil {
+					return err
+				}
+				values["CommonFateAWSAccountID"] = v
 			}
-			values["AccountId"] = v
-			values["Id"] = stackname
 
+			values["HandlerId"] = handlerId
 			parameterKeys := convertValuesToCloudformationParameter(values)
 
 			s3client := s3.NewFromConfig(awsCfg)
@@ -213,6 +221,6 @@ func convertValuesToCloudformationParameter(m map[string]string) string {
 
 // this will create a unique identifier for AWS System Manager Parameter Store
 // for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
-func createUniqueProviderSSMName(p targetsvc.Provider, k string) string {
-	return "/" + path.Join(p.Publisher, p.Name, p.Version, "configuration", k)
+func createUniqueProviderSSMName(handlerId string, k string) string {
+	return "/" + path.Join("commonfate", "provider", handlerId, k)
 }

@@ -38,7 +38,7 @@ var CreateCommand = cli.Command{
 		}
 
 		res, err := cf.AdminCreateTargetGroupWithResponse(ctx, types.AdminCreateTargetGroupJSONRequestBody{
-			ID:           id,
+			Id:           id,
 			TargetSchema: schemaFrom,
 		})
 		if err != nil {

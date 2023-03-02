@@ -21,3 +21,7 @@ bin
 gon.cf.hcl
 gon.cf.arm.hcl
 .goreleaser.yml
+
+.env
+
+launch.json
