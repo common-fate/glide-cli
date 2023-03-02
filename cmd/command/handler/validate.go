@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/cfaws"
-	"github.com/common-fate/common-fate/pkg/pdk"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerruntime"
 	"github.com/urfave/cli/v2"
 )
 
@@ -28,7 +28,7 @@ var ValidateCommand = cli.Command{
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
 		}
-		providerRuntime, err := pdk.NewLambdaRuntime(c.Context, id)
+		providerRuntime, err := handlerruntime.NewLambdaRuntime(c.Context, id)
 		if err != nil {
 			return err
 		}
@@ -55,27 +55,8 @@ var ValidateCommand = cli.Command{
 
 		clio.Infof("provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
 
-		isHealthy := true
-		if len(desc.ConfigValidation.AdditionalProperties) > 0 {
-			clio.Infof("validating config...")
-			for k, v := range desc.ConfigValidation.AdditionalProperties {
-				if v.Success {
-					clio.Successf(" %s", k)
-				} else {
-					clio.Error("%s", k)
-					isHealthy = false
-				}
-			}
-		} else {
-			clio.Warn("Could not find any config validations for this provider.")
-		}
-
-		if !isHealthy {
-			clio.Warn("Some config validation failed. Deployment is unhealthy")
-		}
-
-		clio.Info("Deployment is healthy")
-
+		clio.Infof("Deployment is %v", desc.Healthy)
+		clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
 		return nil
 	},
 }

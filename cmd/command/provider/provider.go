@@ -11,7 +11,7 @@ import (
 	aws_config "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/service/targetsvc"
@@ -41,11 +41,8 @@ var BootstrapCommand = cli.Command{
 	Action: func(c *cli.Context) error {
 
 		ctx := context.Background()
-		cfg, err := config.Load()
-		if err != nil {
-			return err
-		}
-		registryClient, err := providerregistrysdk.NewClientWithResponses(cfg.Contexts[cfg.CurrentContext].RegistryAPIURL)
+
+		registryClient, err := providerregistrysdk.NewClientWithResponses(build.ProviderRegistryAPIURL)
 		if err != nil {
 			return errors.New("error configuring provider registry client")
 		}
