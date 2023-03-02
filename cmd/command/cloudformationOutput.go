@@ -164,6 +164,7 @@ var GenerateCfOutput = cli.Command{
 				values["CommonFateAWSAccountID"] = v
 			}
 
+			values["HandlerId"] = handlerId
 			parameterKeys := convertValuesToCloudformationParameter(values)
 
 			s3client := s3.NewFromConfig(awsCfg)
