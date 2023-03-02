@@ -105,7 +105,7 @@ var GenerateCfOutput = cli.Command{
 
 			values["BootstrapBucketName"] = bootstrapBucket
 			values["HandlerID"] = handlerId
-			values["CommonFateAWSAccountId"] = commonFateAWSAccountId
+			values["CommonFateAWSAccountID"] = commonFateAWSAccountId
 			lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
 			values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
 
@@ -140,7 +140,8 @@ var GenerateCfOutput = cli.Command{
 
 					clio.Successf("Added to AWS System Manager Parameter Store with name '%s'", name)
 
-					values[ConvertToPascalCase(k)] = name
+					// secret config should have "Secret" prefix to the config key name.
+					values[ConvertToPascalCase(k)+"Secret"] = name
 
 					continue
 				}
@@ -163,7 +164,6 @@ var GenerateCfOutput = cli.Command{
 				values["CommonFateAWSAccountID"] = v
 			}
 
-			values["HandlerId"] = handlerId
 			parameterKeys := convertValuesToCloudformationParameter(values)
 
 			s3client := s3.NewFromConfig(awsCfg)
