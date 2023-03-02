@@ -35,14 +35,14 @@ var BootstrapCommand = cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "bootstrap-bucket", Required: true, Aliases: []string{"bb"}, Usage: "The name of the bootstrap bucket to copy assets into", EnvVars: []string{"DEPLOYMENT_BUCKET"}},
-		// &cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, EnvVars: []string{"COMMONFATE_PROVIDER_REGISTRY_API_URL"}, Hidden: true},
+		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 
 	Action: func(c *cli.Context) error {
 
 		ctx := context.Background()
 
-		registryClient, err := providerregistrysdk.NewClientWithResponses(build.ProviderRegistryAPIURL)
+		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
 		if err != nil {
 			return errors.New("error configuring provider registry client")
 		}
