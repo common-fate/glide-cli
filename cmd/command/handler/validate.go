@@ -55,8 +55,21 @@ var ValidateCommand = cli.Command{
 
 		clio.Infof("provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
 
-		clio.Infof("Deployment is %v", desc.Healthy)
-		clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
+		clio.Infof("Audit Schema: %+v\n", desc.Schema.Audit)
+		clio.Infof("Target Schema: %+v\n", desc.Schema.Target)
+		clio.Infof("Config Schema: %+v\n", desc.Schema.Config)
+
+		if len(desc.Diagnostics) > 0 {
+			clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
+		}
+
+		if desc.Healthy {
+			clio.Success("Deployment is healthy")
+
+		} else {
+			clio.Error("Deployment is unhealthy")
+
+		}
 		return nil
 	},
 }
