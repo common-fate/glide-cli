@@ -253,14 +253,14 @@ github.com/common-fate/cloudform v0.3.0 h1:dl0dLX4trbj+fAZexZ+jMVto/TyamCRJ28pB/
 github.com/common-fate/cloudform v0.3.0/go.mod h1:a9sj6SQK4zNb7Ef/Y/5y83qYrHJ8jtWpjAiQXbNyT3g=
 github.com/common-fate/common-fate v0.13.3-0.20230301155803-ecd8e49e531d h1:bfBGSZJtofg67cNTQ8NnfdT3ntr93CvKwEx1v9BNSuk=
 github.com/common-fate/common-fate v0.13.3-0.20230301155803-ecd8e49e531d/go.mod h1:H1p6jENj0zOe+uRa0ncr3hjr/AMDkmME6cCZQDgom7Q=
+github.com/common-fate/common-fate v0.13.3-0.20230303005028-f5e6242ab612 h1:eB2gUAzw+gLeLvYCiYlhCK9aDdtRyAxbM7iabCNoWbA=
+github.com/common-fate/common-fate v0.13.3-0.20230303005028-f5e6242ab612/go.mod h1:qz+PG8azInXZ1xyVS0HITs1rHoPUR8t8rU+JDAo33b8=
 github.com/common-fate/ddb v0.15.0 h1:JZTI5rb7Roogf+dPnF2rUo9RTfH5WYvOafD3mdRxBHs=
 github.com/common-fate/ddb v0.15.0/go.mod h1:W68x78n2NUERIGjYyl6nPTyvLSlqYSdVO3Fk1gMGaKE=
 github.com/common-fate/frontmatter v0.0.0-20220825121704-2d2ec51f9c73 h1:JZt+aGTp9AghUxzIQ5M1sDvpiyAi857P2DkbmY19KpI=
 github.com/common-fate/frontmatter v0.0.0-20220825121704-2d2ec51f9c73/go.mod h1:wzIx7x7HUJ7wtLG1pTgRJhHkPqxntv7r45t19obL/gQ=
 github.com/common-fate/iso8601 v1.0.2 h1:gl6iNbE8TnJzg+lYJxPNYOkF+oHYde2K2s2i+5o4yHE=
 github.com/common-fate/iso8601 v1.0.2/go.mod h1:DU4mvUEkkWZUUSJq2aCuNqM1luSb0Pwyb2dLzXS+img=
-github.com/common-fate/provider-registry-sdk-go v0.2.2 h1:YCzouAaQRkpN73O204BkJza505wp9MLHT96PRlZVqn0=
-github.com/common-fate/provider-registry-sdk-go v0.2.2/go.mod h1:L7Ub4A1IQ9yoQ1r0/lCRyQOvMp7YA7+YJ/hYEKWxzuw=
 github.com/common-fate/provider-registry-sdk-go v0.2.3 h1:7Tco7By7k97nC+/Vkw2WjCt3mthoZtxeHCibMu05//I=
 github.com/common-fate/provider-registry-sdk-go v0.2.3/go.mod h1:L7Ub4A1IQ9yoQ1r0/lCRyQOvMp7YA7+YJ/hYEKWxzuw=
 github.com/common-fate/testvault v0.1.0 h1:XVhbmcNySGIA203FywYW7wL44Mlcg23UUek3bdg5tzQ=
@@ -384,6 +384,8 @@ github.com/golang/mock v1.4.0/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt
 github.com/golang/mock v1.4.1/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
 github.com/golang/mock v1.4.3/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
 github.com/golang/mock v1.4.4/go.mod h1:l3mdAwkq5BuhzHwde/uurv3sEJeZMXNpwsxVWU71h+4=
+github.com/golang/mock v1.6.0 h1:ErTB+efbowRARo13NNdxyJji2egdxLGQhRaY+DUumQc=
+github.com/golang/mock v1.6.0/go.mod h1:p6yTPP+5HYm5mzsMV8JkE6ZKdX+/wYM6Hr+LicevLPs=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -1049,6 +1051,7 @@ golang.org/x/tools v0.0.0-20200729194436-6467de6f59a7/go.mod h1:njjCfa9FT2d7l9Bc
 golang.org/x/tools v0.0.0-20200804011535-6c149bb5ef0d/go.mod h1:njjCfa9FT2d7l9Bc6FUM5FLjQPp3cFF28FI3qnDFljA=
 golang.org/x/tools v0.0.0-20200825202427-b303f430e36d/go.mod h1:njjCfa9FT2d7l9Bc6FUM5FLjQPp3cFF28FI3qnDFljA=
 golang.org/x/tools v0.0.0-20210106214847-113979e3529a/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
+golang.org/x/tools v0.1.1/go.mod h1:o0xws9oXOQQZyjljx8fwUC0k7L1pTE6eaCbjGeHmOkk=
 golang.org/x/tools v0.1.2/go.mod h1:o0xws9oXOQQZyjljx8fwUC0k7L1pTE6eaCbjGeHmOkk=
 golang.org/x/tools v0.1.10/go.mod h1:Uh6Zz+xoGYZom868N8YTex3t7RhtHDBrE8Gzo9bV56E=
 golang.org/x/tools v0.3.0 h1:SrNbZl6ECOS1qFzgTdQfWXZM9XBkiA6tkFrH9YSTPHM=

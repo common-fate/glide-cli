@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.28.0
 	github.com/aws/smithy-go v1.13.5
 	github.com/common-fate/clio v1.1.0
-	github.com/common-fate/common-fate v0.13.3-0.20230301155803-ecd8e49e531d
+	github.com/common-fate/common-fate v0.13.3-0.20230303005028-f5e6242ab612
 	github.com/common-fate/provider-registry-sdk-go v0.2.3
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -89,6 +89,7 @@ require (
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
