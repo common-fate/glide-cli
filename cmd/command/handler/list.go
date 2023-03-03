@@ -14,6 +14,7 @@ import (
 
 var ListCommand = cli.Command{
 	Name:        "list",
+	Aliases:     []string{"ls"},
 	Description: "List handlers",
 	Usage:       "List handlers",
 	Action: cli.ActionFunc(func(c *cli.Context) error {

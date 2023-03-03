@@ -17,7 +17,7 @@ require (
 	github.com/aws/smithy-go v1.13.5
 	github.com/common-fate/clio v1.1.0
 	github.com/common-fate/common-fate v0.13.3-0.20230301155803-ecd8e49e531d
-	github.com/common-fate/provider-registry-sdk-go v0.2.2
+	github.com/common-fate/provider-registry-sdk-go v0.2.5
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
