@@ -140,7 +140,8 @@ var GenerateCfOutput = cli.Command{
 
 					clio.Successf("Added to AWS System Manager Parameter Store with name '%s'", name)
 
-					values[ConvertToPascalCase(k)] = name
+					// secret config should have "Secret" prefix to the config key name.
+					values[ConvertToPascalCase(k)+"Secret"] = name
 
 					continue
 				}
