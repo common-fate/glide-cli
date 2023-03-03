@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
@@ -53,15 +55,7 @@ var ValidateCommand = cli.Command{
 			return err
 		}
 
-		clio.Infof("provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
-
-		clio.Infof("Audit Schema: %+v\n", desc.Schema.Audit)
-		clio.Infof("Target Schema: %+v\n", desc.Schema.Target)
-		clio.Infof("Config Schema: %+v\n", desc.Schema.Config)
-
-		if len(desc.Diagnostics) > 0 {
-			clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
-		}
+		clio.Infof("Provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
 
 		if desc.Healthy {
 			clio.Success("Deployment is healthy")
@@ -70,6 +64,22 @@ var ValidateCommand = cli.Command{
 			clio.Error("Deployment is unhealthy")
 
 		}
+		if len(desc.Diagnostics) > 0 {
+			clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
+		}
+		schemaBytes, err := json.Marshal(desc.Schema)
+		if err != nil {
+			return err
+		}
+		var prettyJSON bytes.Buffer
+		err = json.Indent(&prettyJSON, schemaBytes, "", "\t")
+		if err != nil {
+			return err
+		}
+
+		clio.Infow("Provider Schema")
+		clio.Info(prettyJSON.String())
+
 		return nil
 	},
 }
