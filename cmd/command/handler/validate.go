@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/cfaws"
-	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerruntime"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerclient"
 	"github.com/urfave/cli/v2"
 )
 
@@ -30,7 +30,7 @@ var ValidateCommand = cli.Command{
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
 		}
-		providerRuntime, err := handlerruntime.NewLambdaRuntime(c.Context, id)
+		providerRuntime, err := handlerclient.NewLambdaRuntime(c.Context, id)
 		if err != nil {
 			return err
 		}
