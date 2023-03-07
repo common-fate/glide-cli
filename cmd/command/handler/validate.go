@@ -1,13 +1,15 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/cfaws"
-	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerruntime"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerclient"
 	"github.com/urfave/cli/v2"
 )
 
@@ -28,7 +30,7 @@ var ValidateCommand = cli.Command{
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
 		}
-		providerRuntime, err := handlerruntime.NewLambdaRuntime(c.Context, id)
+		providerRuntime, err := handlerclient.NewLambdaRuntime(c.Context, id)
 		if err != nil {
 			return err
 		}
@@ -53,10 +55,31 @@ var ValidateCommand = cli.Command{
 			return err
 		}
 
-		clio.Infof("provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
+		clio.Infof("Provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
 
-		clio.Infof("Deployment is %v", desc.Healthy)
-		clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
+		if desc.Healthy {
+			clio.Success("Deployment is healthy")
+
+		} else {
+			clio.Error("Deployment is unhealthy")
+
+		}
+		if len(desc.Diagnostics) > 0 {
+			clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
+		}
+		schemaBytes, err := json.Marshal(desc.Schema)
+		if err != nil {
+			return err
+		}
+		var prettyJSON bytes.Buffer
+		err = json.Indent(&prettyJSON, schemaBytes, "", "\t")
+		if err != nil {
+			return err
+		}
+
+		clio.Infow("Provider Schema")
+		clio.Info(prettyJSON.String())
+
 		return nil
 	},
 }
