@@ -48,8 +48,16 @@ func (presigner Presigner) GetObject(
 }
 
 var GenerateCfOutput = cli.Command{
-	Name:  "generate-cf-output",
-	Usage: "Generate cloudformation output for create-stack or update-stack commands",
+	Name:  "cloudformation",
+	Usage: "Manage CloudFormation templates for Providers",
+	Subcommands: []*cli.Command{
+		&cfnCommandCommand,
+	},
+}
+
+var cfnCommandCommand = cli.Command{
+	Name:  "command",
+	Usage: "Generate AWS CLI commands to create or update CloudFormation stacks",
 	Subcommands: []*cli.Command{
 		&UpdateStack,
 		&CreateStack,
@@ -78,8 +86,8 @@ func convertValuesToCloudformationParameter(m map[string]string) string {
 }
 
 var CreateStack = cli.Command{
-	Name:  "create-stack",
-	Usage: "Create a output for cloudformation create-stack command",
+	Name:  "create",
+	Usage: "Generate an 'aws cloudformation create-stack' command",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The Id of the handler e.g aws-sso"},
@@ -238,8 +246,8 @@ var CreateStack = cli.Command{
 }
 
 var UpdateStack = cli.Command{
-	Name:  "update-stack",
-	Usage: "create a output for cloudformation update-stack command",
+	Name:  "update",
+	Usage: "Generate an 'aws cloudformation update-stack' command",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "stackname", Usage: "The name of the cloudformation stack", Required: true},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
