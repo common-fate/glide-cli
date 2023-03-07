@@ -27,15 +27,19 @@ var ValidateCommand = cli.Command{
 	Action: func(c *cli.Context) error {
 		id := "cf-handler-" + c.String("id")
 		awsRegion := c.String("aws-region")
+
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
 		}
+
 		providerRuntime, err := handlerclient.NewLambdaRuntime(c.Context, id)
 		if err != nil {
 			return err
 		}
 		// check the cloudformation stack here.
 		cfg, err := cfaws.ConfigFromContextOrDefault(c.Context)
+		// ensure cli flag region is used
+		cfg.Region = awsRegion
 		if err != nil {
 			return err
 		}
