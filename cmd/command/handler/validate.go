@@ -25,7 +25,7 @@ var ValidateCommand = cli.Command{
 		&cli.StringFlag{Name: "cloudformation-stack-name", Usage: "If Cloudformation was used to deploy the provider, use this flag to check the status of the stack"},
 	},
 	Action: func(c *cli.Context) error {
-		id := c.String("id")
+		id := "cf-handler-" + c.String("id")
 		awsRegion := c.String("aws-region")
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
