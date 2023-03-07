@@ -269,6 +269,8 @@ github.com/common-fate/provider-registry-sdk-go v0.10.1-0.20230307014119-2f498ca
 github.com/common-fate/provider-registry-sdk-go v0.10.1-0.20230307014119-2f498ca9fda8/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
 github.com/common-fate/provider-registry-sdk-go v0.10.1 h1:+ThLDuv+Cdh2mgie4ymg3Hjon336xuqTOwJ9TAleqnc=
 github.com/common-fate/provider-registry-sdk-go v0.10.1/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.10.2 h1:gu0CfUI4YwBt0OOsV2q7+eFOAwtv314KsiePYfIf7vk=
+github.com/common-fate/provider-registry-sdk-go v0.10.2/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
 github.com/common-fate/testvault v0.1.0 h1:XVhbmcNySGIA203FywYW7wL44Mlcg23UUek3bdg5tzQ=
 github.com/common-fate/testvault v0.1.0/go.mod h1:JJ74LtQZlnjHUj1LuDj2Sz4hEARXf6YOrqzdf3DGFZM=
 github.com/common-fate/useragent v0.1.0 h1:RLmkIiJXcOUJAUyXWc/zCaGbrGmlCbHBGMx99ztQ3ZU=
