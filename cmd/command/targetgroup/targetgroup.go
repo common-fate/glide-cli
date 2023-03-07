@@ -14,5 +14,6 @@ var Command = cli.Command{
 		&UnlinkCommand,
 		&ListCommand,
 		&DeleteCommand,
+		&RoutesCommand,
 	},
 }
