@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.28.0
 	github.com/aws/smithy-go v1.13.5
 	github.com/common-fate/clio v1.1.0
-	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307001933-31e01fbff9f7
+	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307021520-40612e38cc53
 	github.com/common-fate/provider-registry-sdk-go v0.10.2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
