@@ -114,6 +114,10 @@ var BootstrapCommand = cli.Command{
 	},
 }
 
+func getProviderId(publisher, name, version string) string {
+	return publisher + "/" + name + "@" + version
+}
+
 var ListCommand = cli.Command{
 	Name:        "list",
 	Aliases:     []string{"ls"},
@@ -139,7 +143,7 @@ var ListCommand = cli.Command{
 		switch res.StatusCode() {
 		case http.StatusOK:
 			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"name", "team", "version", "FunctionZipS3Path", "CFNTemplateS3Path"})
+			table.SetHeader([]string{"id", "name", "publisher", "version"})
 			table.SetAutoWrapText(false)
 			table.SetAutoFormatHeaders(true)
 			table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -154,7 +158,7 @@ var ListCommand = cli.Command{
 				for _, d := range res.JSON200.Providers {
 
 					table.Append([]string{
-						d.Name, d.Publisher, d.Version, d.LambdaAssetS3Arn, d.CfnTemplateS3Arn,
+						getProviderId(d.Publisher, d.Name, d.Version), d.Name, d.Publisher, d.Version,
 					})
 				}
 			}

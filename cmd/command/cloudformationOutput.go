@@ -13,6 +13,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
@@ -37,7 +38,7 @@ func (presigner Presigner) GetObject(
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 	}, func(opts *s3.PresignOptions) {
-		opts.Expires = time.Duration(lifetimeSecs * int64(time.Second))
+		opts.Expires = time.Duration(lifetimeSecs)
 	})
 	if err != nil {
 		log.Printf("Couldn't get a presigned request to get %v:%v. Here's why: %v\n",
@@ -48,7 +49,43 @@ func (presigner Presigner) GetObject(
 
 var GenerateCfOutput = cli.Command{
 	Name:  "generate-cf-output",
-	Usage: "Generate cloudformation output",
+	Usage: "Generate cloudformation output for create-stack or update-stack commands",
+	Subcommands: []*cli.Command{
+		&UpdateStack,
+		&CreateStack,
+	},
+}
+
+func ConvertToPascalCase(s string) string {
+	arg := strings.Split(s, "_")
+	var formattedStr []string
+
+	for _, v := range arg {
+		formattedStr = append(formattedStr, strings.ToUpper(v[0:1])+v[1:])
+	}
+
+	return strings.Join(formattedStr, "")
+}
+
+func convertValuesToCloudformationParameter(m map[string]string) string {
+	parameters := "--parameters "
+
+	for k, v := range m {
+		parameters = parameters + strings.Join([]string{fmt.Sprintf("ParameterKey=\"%s\"", k), ",", fmt.Sprintf("ParameterValue=\"%s\"", v)}, "") + " "
+	}
+
+	return parameters
+}
+
+// this will create a unique identifier for AWS System Manager Parameter Store
+// for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
+func createUniqueProviderSSMName(handlerID string, k string) string {
+	return "/" + path.Join("commonfate", "provider", handlerID, k)
+}
+
+var CreateStack = cli.Command{
+	Name:  "create-stack",
+	Usage: "Create a output for cloudformation create-stack command",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The Id of the handler e.g aws-sso"},
@@ -198,29 +235,115 @@ var GenerateCfOutput = cli.Command{
 	},
 }
 
-func ConvertToPascalCase(s string) string {
-	arg := strings.Split(s, "_")
-	var formattedStr []string
+var UpdateStack = cli.Command{
+	Name:  "update-stack",
+	Usage: "create a output for cloudformation update-stack command",
+	Flags: []cli.Flag{
+		&cli.StringFlag{Name: "stackname", Usage: "The name of the cloudformation stack", Required: true},
+		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
+	},
+	Action: func(c *cli.Context) error {
+		stackname := c.String("stackname")
+		region := c.String("region")
 
-	for _, v := range arg {
-		formattedStr = append(formattedStr, strings.ToUpper(v[0:1])+v[1:])
-	}
+		ctx := c.Context
 
-	return strings.Join(formattedStr, "")
-}
+		awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
+		if err != nil {
+			return err
+		}
 
-func convertValuesToCloudformationParameter(m map[string]string) string {
-	parameters := "--parameters "
+		cfn := cloudformation.NewFromConfig(awsCfg)
 
-	for k, v := range m {
-		parameters = parameters + strings.Join([]string{fmt.Sprintf("ParameterKey=\"%s\"", k), ",", fmt.Sprintf("ParameterValue=\"%s\"", v)}, "") + " "
-	}
+		out, err := cfn.DescribeStacks(ctx, &cloudformation.DescribeStacksInput{
+			StackName: &stackname,
+		})
+		if err != nil {
+			return err
+		}
 
-	return parameters
-}
+		if len(out.Stacks) > 0 {
+			stack := out.Stacks[0]
 
-// this will create a unique identifier for AWS System Manager Parameter Store
-// for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
-func createUniqueProviderSSMName(handlerID string, k string) string {
-	return "/" + path.Join("commonfate", "provider", handlerID, k)
+			values := make(map[string]string)
+			for _, parameter := range stack.Parameters {
+
+				// secret values have this prefix so need to update the SSM parameter store for these keys
+				if strings.HasPrefix(*parameter.ParameterValue, "/commonfate/provider/") {
+					var shouldUpdate bool
+
+					err = survey.AskOne(&survey.Confirm{Message: "Do you want to update value for " + *parameter.ParameterKey + " in AWS parameter store?"}, &shouldUpdate)
+					if err != nil {
+						return err
+					}
+
+					if shouldUpdate {
+						client := ssm.NewFromConfig(awsCfg)
+
+						var secret string
+						name := *parameter.ParameterValue
+						helpMsg := fmt.Sprintf("This will be stored in aws system manager parameter store with name '%s'", name)
+						err = survey.AskOne(&survey.Password{Message: *parameter.ParameterKey + ":", Help: helpMsg}, &secret)
+						if err != nil {
+							return err
+						}
+
+						_, err = client.PutParameter(ctx, &ssm.PutParameterInput{
+							Name:      aws.String(name),
+							Value:     aws.String(secret),
+							Type:      types.ParameterTypeSecureString,
+							Overwrite: aws.Bool(true),
+						})
+						if err != nil {
+							return err
+						}
+
+						clio.Successf("Updated value in AWS System Manager Parameter Store for key with name '%s'", name)
+					}
+
+					continue
+				}
+
+				var v string
+				err = survey.AskOne(&survey.Input{Message: *parameter.ParameterKey + ":", Default: *parameter.ParameterValue}, &v)
+				if err != nil {
+					return err
+				}
+
+				if v != *parameter.ParameterValue {
+
+					values[*parameter.ParameterKey] = v
+				} else {
+					values[*parameter.ParameterKey] = *parameter.ParameterValue
+				}
+			}
+
+			parameterKeys := convertValuesToCloudformationParameter(values)
+
+			s3client := s3.NewFromConfig(awsCfg)
+			preSignedClient := s3.NewPresignClient(s3client)
+
+			presigner := Presigner{
+				PresignClient: preSignedClient,
+			}
+
+			bootstrapBucket := values["BootstrapBucketName"]
+			lambdaAssetPath := values["AssetPath"]
+
+			req, err := presigner.GetObject(bootstrapBucket, strings.Replace(lambdaAssetPath, "handler.zip", "cloudformation.json", 1), int64(time.Hour)*1)
+			if err != nil {
+				return nil
+			}
+
+			templateUrl := fmt.Sprintf(" --template-url \"%s\" ", req.URL)
+			stackNameFlag := fmt.Sprintf(" --stack-name %s ", stackname)
+			regionFlag := fmt.Sprintf(" --region %s ", region)
+
+			output := strings.Join([]string{"aws cloudformation update-stack", stackNameFlag, regionFlag, templateUrl, parameterKeys, "--capabilities CAPABILITY_NAMED_IAM"}, "")
+
+			fmt.Printf("%v \n", output)
+		}
+
+		return nil
+	},
 }
