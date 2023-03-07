@@ -1,6 +1,7 @@
 package targetgroup
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -46,7 +47,7 @@ var ListRoutesCommand = cli.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Target Group Id", "Handler Id", "Kind", "Priority", "Valid"})
+		table.SetHeader([]string{"Target Group Id", "Handler Id", "Kind", "Priority", "Valid", "Diagnostics"})
 		table.SetAutoWrapText(false)
 		table.SetAutoFormatHeaders(true)
 		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -59,7 +60,7 @@ var ListRoutesCommand = cli.Command{
 
 		for _, d := range res.JSON200.Routes {
 			table.Append([]string{
-				d.TargetGroupId, d.HandlerId, d.Kind, strconv.Itoa(d.Priority), strconv.FormatBool(d.Valid),
+				d.TargetGroupId, d.HandlerId, d.Kind, strconv.Itoa(d.Priority), strconv.FormatBool(d.Valid), fmt.Sprintf("%v", d.Diagnostics),
 			})
 		}
 		table.Render()
