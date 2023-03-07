@@ -255,6 +255,8 @@ github.com/common-fate/common-fate v0.15.0-alpha1.0.20230306210147-5eccefab8fa5 
 github.com/common-fate/common-fate v0.15.0-alpha1.0.20230306210147-5eccefab8fa5/go.mod h1:W8wRSLiRG9xDPFQRgjB+7Su6iBP4y81tLDSD2VLeMQg=
 github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307001933-31e01fbff9f7 h1:GH42OcuDas1NIoWYXCA3rSvA6dif22r7JvBS1L+r+zc=
 github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307001933-31e01fbff9f7/go.mod h1:W8wRSLiRG9xDPFQRgjB+7Su6iBP4y81tLDSD2VLeMQg=
+github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307021520-40612e38cc53 h1:qxudPUwCARoh5T+eCXUV4WaAEVNclxXQg8czjQjBwDU=
+github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307021520-40612e38cc53/go.mod h1:RDllfRfnhA3LM5QY70yYOw8kNy54ANoTQoxOzD9dKdc=
 github.com/common-fate/ddb v0.15.0 h1:JZTI5rb7Roogf+dPnF2rUo9RTfH5WYvOafD3mdRxBHs=
 github.com/common-fate/ddb v0.15.0/go.mod h1:W68x78n2NUERIGjYyl6nPTyvLSlqYSdVO3Fk1gMGaKE=
 github.com/common-fate/frontmatter v0.0.0-20220825121704-2d2ec51f9c73 h1:JZt+aGTp9AghUxzIQ5M1sDvpiyAi857P2DkbmY19KpI=
@@ -263,6 +265,14 @@ github.com/common-fate/iso8601 v1.0.2 h1:gl6iNbE8TnJzg+lYJxPNYOkF+oHYde2K2s2i+5o
 github.com/common-fate/iso8601 v1.0.2/go.mod h1:DU4mvUEkkWZUUSJq2aCuNqM1luSb0Pwyb2dLzXS+img=
 github.com/common-fate/provider-registry-sdk-go v0.9.0 h1:ePlFOVi3Lx0a7cyfxtaRLmpF+/tJXkFzldowFR7Pj+w=
 github.com/common-fate/provider-registry-sdk-go v0.9.0/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.9.1 h1:Vp2eU1Ijnt7S77ZP+rBpEFszsAqehGbp4w8pYTXAA/0=
+github.com/common-fate/provider-registry-sdk-go v0.9.1/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.10.1-0.20230307014119-2f498ca9fda8 h1:T4r5IhrWTtXpNHCx0EIgxoY76jrQcyBcuqneGWWeD6Y=
+github.com/common-fate/provider-registry-sdk-go v0.10.1-0.20230307014119-2f498ca9fda8/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.10.1 h1:+ThLDuv+Cdh2mgie4ymg3Hjon336xuqTOwJ9TAleqnc=
+github.com/common-fate/provider-registry-sdk-go v0.10.1/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.10.2 h1:gu0CfUI4YwBt0OOsV2q7+eFOAwtv314KsiePYfIf7vk=
+github.com/common-fate/provider-registry-sdk-go v0.10.2/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
 github.com/common-fate/testvault v0.1.0 h1:XVhbmcNySGIA203FywYW7wL44Mlcg23UUek3bdg5tzQ=
 github.com/common-fate/testvault v0.1.0/go.mod h1:JJ74LtQZlnjHUj1LuDj2Sz4hEARXf6YOrqzdf3DGFZM=
 github.com/common-fate/useragent v0.1.0 h1:RLmkIiJXcOUJAUyXWc/zCaGbrGmlCbHBGMx99ztQ3ZU=
