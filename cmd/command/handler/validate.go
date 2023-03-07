@@ -26,13 +26,10 @@ var ValidateCommand = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		id := c.String("id")
+		awsRegion := c.String("aws-region")
 
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
-		}
-		awsRegion := c.String("aws-region")
-		if awsRegion == "" {
-			return errors.New("aws-region must be specified")
 		}
 
 		providerRuntime, err := handlerclient.NewLambdaRuntime(c.Context, id)
