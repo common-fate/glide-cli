@@ -90,10 +90,9 @@ var CreateStack = cli.Command{
 	Usage: "Generate an 'aws cloudformation create-stack' command",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
-		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The Id of the handler e.g aws-sso"},
+		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The ID of the Handler (for example, 'cf-handler-aws')"},
 		&cli.StringFlag{Name: "bootstrap-bucket", Required: true},
-		&cli.StringFlag{Name: "stackname", Usage: "The name of the cloudformation stack"},
-		&cli.StringFlag{Name: "commonfate-account-id", Usage: "The AWS account where Common Fate is deployed"},
+		&cli.StringFlag{Name: "common-fate-account-id", Usage: "The AWS account where Common Fate is deployed"},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler"},
 		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
@@ -101,7 +100,7 @@ var CreateStack = cli.Command{
 		ctx := c.Context
 		bootstrapBucket := c.String("bootstrap-bucket")
 		handlerID := c.String("handler-id")
-		commonFateAWSAccountID := c.String("commonfate-account-id")
+		commonFateAWSAccountID := c.String("common-fate-account-id")
 		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
 		if err != nil {
 			return errors.New("error configuring provider registry client")
@@ -124,7 +123,7 @@ var CreateStack = cli.Command{
 
 		switch res.StatusCode() {
 		case http.StatusOK:
-			var stackname = c.String("stackname")
+			var stackname = c.String("handler-id")
 			if stackname == "" {
 				err = survey.AskOne(&survey.Input{Message: "enter the cloudformation stackname:", Default: handlerID}, &stackname)
 				if err != nil {
@@ -249,11 +248,11 @@ var UpdateStack = cli.Command{
 	Name:  "update",
 	Usage: "Generate an 'aws cloudformation update-stack' command",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "stackname", Usage: "The name of the cloudformation stack", Required: true},
+		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and name of the CloudFormation stack", Required: true},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
 	},
 	Action: func(c *cli.Context) error {
-		stackname := c.String("stackname")
+		stackname := c.String("handler-id")
 		region := c.String("region")
 
 		ctx := c.Context
@@ -279,7 +278,7 @@ var UpdateStack = cli.Command{
 			for _, parameter := range stack.Parameters {
 
 				// secret values have this prefix so need to update the SSM parameter store for these keys
-				if strings.HasPrefix(*parameter.ParameterValue, "awsssm:///commonfate/provider/") {
+				if strings.HasPrefix(*parameter.ParameterValue, "awsssm:///common-fate/provider/") {
 					var shouldUpdate bool
 
 					err = survey.AskOne(&survey.Confirm{Message: "Do you want to update value for " + *parameter.ParameterKey + " in AWS parameter store?"}, &shouldUpdate)
@@ -367,5 +366,5 @@ type ssmKeyOpts struct {
 // this will create a unique identifier for AWS System Manager Parameter Store
 // for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
 func ssmKey(opts ssmKeyOpts) string {
-	return "awsssm:///" + path.Join("commonfate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
+	return "awsssm:///" + path.Join("common-fate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
 }
