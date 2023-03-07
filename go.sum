@@ -263,6 +263,10 @@ github.com/common-fate/iso8601 v1.0.2 h1:gl6iNbE8TnJzg+lYJxPNYOkF+oHYde2K2s2i+5o
 github.com/common-fate/iso8601 v1.0.2/go.mod h1:DU4mvUEkkWZUUSJq2aCuNqM1luSb0Pwyb2dLzXS+img=
 github.com/common-fate/provider-registry-sdk-go v0.9.0 h1:ePlFOVi3Lx0a7cyfxtaRLmpF+/tJXkFzldowFR7Pj+w=
 github.com/common-fate/provider-registry-sdk-go v0.9.0/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.9.1 h1:Vp2eU1Ijnt7S77ZP+rBpEFszsAqehGbp4w8pYTXAA/0=
+github.com/common-fate/provider-registry-sdk-go v0.9.1/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
+github.com/common-fate/provider-registry-sdk-go v0.10.1-0.20230307014119-2f498ca9fda8 h1:T4r5IhrWTtXpNHCx0EIgxoY76jrQcyBcuqneGWWeD6Y=
+github.com/common-fate/provider-registry-sdk-go v0.10.1-0.20230307014119-2f498ca9fda8/go.mod h1:162QtABfa2v8ahv9O0SFfLCjWylVayGIyWJRLD1iRRc=
 github.com/common-fate/testvault v0.1.0 h1:XVhbmcNySGIA203FywYW7wL44Mlcg23UUek3bdg5tzQ=
 github.com/common-fate/testvault v0.1.0/go.mod h1:JJ74LtQZlnjHUj1LuDj2Sz4hEARXf6YOrqzdf3DGFZM=
 github.com/common-fate/useragent v0.1.0 h1:RLmkIiJXcOUJAUyXWc/zCaGbrGmlCbHBGMx99ztQ3ZU=

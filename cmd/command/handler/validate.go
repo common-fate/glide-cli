@@ -18,7 +18,7 @@ var ValidateCommand = cli.Command{
 	Description: "Validate a handler by invoking the handler directly",
 	Usage:       "Validate a handler",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true, Usage: "unique identifier for handler lambda invokation"},
+		&cli.StringFlag{Name: "id", Required: true, Usage: "The ID of the handler, when deploying via cloudformation this is the HandlerID parameter that you configured. e.g 'aws-sso'"},
 		&cli.StringFlag{Name: "aws-region", Required: true},
 		// commented out for now as there is only one runtimne
 		&cli.StringFlag{Name: "runtime", Required: true, Value: "aws-lambda"},
@@ -47,7 +47,7 @@ var ValidateCommand = cli.Command{
 			if err != nil {
 				return err
 			}
-			clio.Infof("cloudformation stack '%s' exists in '%s' and is in '%s' state", id, awsRegion, stacks.Stacks[0].StackStatus)
+			clio.Infof("cloudformation stack '%s' exists in '%s' and is in '%s' state", c.String("cloudformation-stack-name"), awsRegion, stacks.Stacks[0].StackStatus)
 		}
 
 		desc, err := providerRuntime.Describe(c.Context)
