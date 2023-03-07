@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/cfaws"
-	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerruntime"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerclient"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,7 +18,7 @@ var ValidateCommand = cli.Command{
 	Description: "Validate a handler by invoking the handler directly",
 	Usage:       "Validate a handler",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true, Usage: "unique identifier for handler lambda invokation"},
+		&cli.StringFlag{Name: "id", Required: true, Usage: "The ID of the handler, when deploying via cloudformation this is the HandlerID parameter that you configured. e.g 'aws-sso'"},
 		&cli.StringFlag{Name: "aws-region", Required: true},
 		// commented out for now as there is only one runtimne
 		&cli.StringFlag{Name: "runtime", Required: true, Value: "aws-lambda"},
@@ -27,15 +27,19 @@ var ValidateCommand = cli.Command{
 	Action: func(c *cli.Context) error {
 		id := c.String("id")
 		awsRegion := c.String("aws-region")
+
 		if c.String("runtime") != "aws-lambda" {
 			return errors.New("unsupported runtime. Supported runtimes are [aws-lambda]")
 		}
-		providerRuntime, err := handlerruntime.NewLambdaRuntime(c.Context, id)
+
+		providerRuntime, err := handlerclient.NewLambdaRuntime(c.Context, id)
 		if err != nil {
 			return err
 		}
 		// check the cloudformation stack here.
 		cfg, err := cfaws.ConfigFromContextOrDefault(c.Context)
+		// ensure cli flag region is used
+		cfg.Region = awsRegion
 		if err != nil {
 			return err
 		}
@@ -47,7 +51,7 @@ var ValidateCommand = cli.Command{
 			if err != nil {
 				return err
 			}
-			clio.Infof("cloudformation stack '%s' exists in '%s' and is in '%s' state", id, awsRegion, stacks.Stacks[0].StackStatus)
+			clio.Infof("cloudformation stack '%s' exists in '%s' and is in '%s' state", c.String("cloudformation-stack-name"), awsRegion, stacks.Stacks[0].StackStatus)
 		}
 
 		desc, err := providerRuntime.Describe(c.Context)

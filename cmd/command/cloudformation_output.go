@@ -77,12 +77,6 @@ func convertValuesToCloudformationParameter(m map[string]string) string {
 	return parameters
 }
 
-// this will create a unique identifier for AWS System Manager Parameter Store
-// for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
-func createUniqueProviderSSMName(handlerID string, k string) string {
-	return "/" + path.Join("commonfate", "provider", handlerID, k)
-}
-
 var CreateStack = cli.Command{
 	Name:  "create-stack",
 	Usage: "Create a output for cloudformation create-stack command",
@@ -151,50 +145,58 @@ var CreateStack = cli.Command{
 				return err
 			}
 
-			clio.Warn("Enter the values for your configurations:")
-			for k, v := range res.JSON200.Schema.Config.AdditionalProperties {
-				if v.Secret {
+			config := res.JSON200.Schema.Config
+			if config != nil {
+				clio.Info("Enter the values for your configurations:")
+				for k, v := range *config {
+					if v.Secret != nil && *v.Secret {
+						client := ssm.NewFromConfig(awsCfg)
 
-					client := ssm.NewFromConfig(awsCfg)
+						var secret string
+						name := ssmKey(ssmKeyOpts{
+							HandlerID:    handlerID,
+							Key:          k,
+							Publisher:    provider.Publisher,
+							ProviderName: provider.Name,
+						})
 
-					var secret string
-					name := createUniqueProviderSSMName(handlerID, k)
-					helpMsg := fmt.Sprintf("This will be stored in aws system manager parameter store with name '%s'", name)
-					err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
+						helpMsg := fmt.Sprintf("This will be stored in AWS SSM Parameter Store with name '%s'", name)
+						err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
+						if err != nil {
+							return err
+						}
+
+						_, err = client.PutParameter(ctx, &ssm.PutParameterInput{
+							Name:      aws.String(name),
+							Value:     aws.String(secret),
+							Type:      types.ParameterTypeSecureString,
+							Overwrite: aws.Bool(true),
+						})
+						if err != nil {
+							return err
+						}
+
+						clio.Successf("Added to AWS SSM Parameter Store with name '%s'", name)
+
+						// secret config should have "Secret" prefix to the config key name.
+						values[ConvertToPascalCase(k)+"Secret"] = name
+
+						continue
+					}
+
+					var v string
+					err = survey.AskOne(&survey.Input{Message: k + ":"}, &v)
 					if err != nil {
 						return err
 					}
+					values[ConvertToPascalCase(k)] = v
 
-					_, err = client.PutParameter(ctx, &ssm.PutParameterInput{
-						Name:      aws.String(name),
-						Value:     aws.String(secret),
-						Type:      types.ParameterTypeSecureString,
-						Overwrite: aws.Bool(true),
-					})
-					if err != nil {
-						return err
-					}
-
-					clio.Successf("Added to AWS System Manager Parameter Store with name '%s'", name)
-
-					// secret config should have "Secret" prefix to the config key name.
-					values[ConvertToPascalCase(k)+"Secret"] = name
-
-					continue
 				}
-
-				var v string
-				err = survey.AskOne(&survey.Input{Message: k + ":"}, &v)
-				if err != nil {
-					return err
-				}
-				values[ConvertToPascalCase(k)] = v
-
 			}
 
 			if commonFateAWSAccountID == "" {
 				var v string
-				err = survey.AskOne(&survey.Input{Message: "enter the account Id of the account where commonfate is deployed:"}, &v)
+				err = survey.AskOne(&survey.Input{Message: "The ID of the AWS account where Common Fate is deployed:"}, &v)
 				if err != nil {
 					return err
 				}
@@ -269,7 +271,7 @@ var UpdateStack = cli.Command{
 			for _, parameter := range stack.Parameters {
 
 				// secret values have this prefix so need to update the SSM parameter store for these keys
-				if strings.HasPrefix(*parameter.ParameterValue, "/commonfate/provider/") {
+				if strings.HasPrefix(*parameter.ParameterValue, "awsssm:///commonfate/provider/") {
 					var shouldUpdate bool
 
 					err = survey.AskOne(&survey.Confirm{Message: "Do you want to update value for " + *parameter.ParameterKey + " in AWS parameter store?"}, &shouldUpdate)
@@ -311,7 +313,6 @@ var UpdateStack = cli.Command{
 				}
 
 				if v != *parameter.ParameterValue {
-
 					values[*parameter.ParameterKey] = v
 				} else {
 					values[*parameter.ParameterKey] = *parameter.ParameterValue
@@ -346,4 +347,17 @@ var UpdateStack = cli.Command{
 
 		return nil
 	},
+}
+
+type ssmKeyOpts struct {
+	HandlerID    string
+	Key          string
+	Publisher    string
+	ProviderName string
+}
+
+// this will create a unique identifier for AWS System Manager Parameter Store
+// for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
+func ssmKey(opts ssmKeyOpts) string {
+	return "awsssm:///" + path.Join("commonfate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
 }
