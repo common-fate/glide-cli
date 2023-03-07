@@ -37,7 +37,7 @@ var WatchCommand = cli.Command{
 
 		// logGroup for handlers uses the id of the handler as its name
 		// this is defined in the cloudformation template
-		logGroup := "/aws/lambda/cf-handler-" + c.String("id")
+		logGroup := "/aws/lambda/" + c.String("id")
 		clio.Infof("Starting to watch logs for log group id: %s", logGroup)
 		watchEvents(logGroup, cfg.Region, c.String("filter"))
 		return nil
@@ -75,7 +75,7 @@ var GetCommand = cli.Command{
 			return err
 		}
 
-		logGroup := "/aws/lambda/cf-handler-" + c.String("id")
+		logGroup := "/aws/lambda/" + c.String("id")
 		start := c.String("start")
 		end := c.String("end")
 		clio.Info("Starting to get logs for Health check lambda, log group id: %s", logGroup)

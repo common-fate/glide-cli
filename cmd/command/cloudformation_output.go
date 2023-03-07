@@ -118,12 +118,17 @@ var GenerateCfOutput = cli.Command{
 			if config != nil {
 				clio.Info("Enter the values for your configurations:")
 				for k, v := range *config {
-					if v.Secret {
-
+					if v.Secret != nil && *v.Secret {
 						client := ssm.NewFromConfig(awsCfg)
 
 						var secret string
-						name := createUniqueProviderSSMName(handlerID, k)
+						name := ssmKey(ssmKeyOpts{
+							HandlerID:    handlerID,
+							Key:          k,
+							Publisher:    provider.Publisher,
+							ProviderName: provider.Name,
+						})
+
 						helpMsg := fmt.Sprintf("This will be stored in AWS SSM Parameter Store with name '%s'", name)
 						err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
 						if err != nil {
@@ -222,8 +227,15 @@ func convertValuesToCloudformationParameter(m map[string]string) string {
 	return parameters
 }
 
+type ssmKeyOpts struct {
+	HandlerID    string
+	Key          string
+	Publisher    string
+	ProviderName string
+}
+
 // this will create a unique identifier for AWS System Manager Parameter Store
 // for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
-func createUniqueProviderSSMName(handlerID string, k string) string {
-	return "/" + path.Join("commonfate", "provider", handlerID, k)
+func ssmKey(opts ssmKeyOpts) string {
+	return "/" + path.Join("commonfate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
 }
