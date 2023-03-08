@@ -52,7 +52,7 @@ func RequireAWSCredentials() cli.BeforeFunc {
 		defer si.Stop()
 		needCredentialsLog := clierr.Info(`Please export valid AWS credentials to run this command.
 For more information see:
-https://docs.commonfate.io/granted-approvals/troubleshooting/aws-credentials
+https://docs.commonfate.io/common-fate/troubleshooting/aws-credentials
 `)
 		cfg, err := cfaws.ConfigFromContextOrDefault(ctx)
 		if err != nil {

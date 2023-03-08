@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -11,10 +12,10 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/briandowns/spinner"
 	"github.com/common-fate/cli/cmd/command"
 	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
@@ -45,16 +46,16 @@ var Command = cli.Command{
 			return err
 		}
 
-		bootstrapStackOutput, err := bs.Detect(ctx)
+		bootstrapStackOutput, err := bs.Detect(ctx, false)
 		if err == bootstrapper.ErrNotDeployed {
 			clio.Debug("the bootstrap stack was not detected")
 			clio.Warnf("To get started deploying providers, you need to bootstrap this AWS account and region (%s:%s)", awsContext.Account, awsContext.Config.Region)
-			clio.Info("Bootstrapping will deploy a Cloudformation Stack than creates an S3 Bucket.\nProvider assets will be copied from the Common Fate Provider Registry into this bucket.\nThese assets can then be deployed into your account.")
+			clio.Info("Bootstrapping will deploy a Cloudformation Stack then creates an S3 Bucket.\nProvider assets will be copied from the Common Fate Provider Registry into this bucket.\nThese assets can then be deployed into your account.")
 			_, err := bs.Deploy(ctx, false)
 			if err != nil {
 				return err
 			}
-			bootstrapStackOutput, err = bs.Detect(ctx)
+			bootstrapStackOutput, err = bs.Detect(ctx, true)
 			if err != nil {
 				return err
 			}
@@ -138,7 +139,7 @@ var Command = cli.Command{
 
 		// clio.Infof("You have selected to deploy: %s@%s and use the target Kind: %s", selectedProviderType, selectedProviderVersion, selectedProviderKind)
 		clio.Info("Beginning to copy files from the registry to the bootstrap bucket")
-		err = bs.CopyProviderFiles(ctx, provider)
+		files, err := bs.CopyProviderFiles(ctx, provider)
 		if err != nil {
 			return err
 		}
@@ -224,26 +225,26 @@ var Command = cli.Command{
 			ParameterValue: aws.String(handlerID),
 		})
 
-		s3client := s3.NewFromConfig(awsContext.Config)
-		preSignedClient := s3.NewPresignClient(s3client)
+		// s3client := s3.NewFromConfig(awsContext.Config)
+		// preSignedClient := s3.NewPresignClient(s3client)
 
-		presigner := command.Presigner{
-			PresignClient: preSignedClient,
-		}
+		// presigner := command.Presigner{
+		// 	PresignClient: preSignedClient,
+		// }
 
-		req, err := presigner.GetObject(bootstrapStackOutput.AssetsBucket, path.Join(lambdaAssetPath, "cloudformation.json"), int64(time.Hour))
-		if err != nil {
-			return nil
-		}
+		// req, err := presigner.GetObject(bootstrapStackOutput.AssetsBucket, path.Join(lambdaAssetPath, "cloudformation.json"), int64(time.Hour))
+		// if err != nil {
+		// 	return nil
+		// }
 
 		d, err := deployer.New(ctx)
 		if err != nil {
 			return err
 		}
 
-		clio.Infof("Deploying Cloudformation stack '%s'", handlerID, d, req)
+		clio.Infof("Deploying Cloudformation stack '%s'", handlerID)
 
-		status, err := d.Deploy(ctx, req.URL, parameters, nil, handlerID, "", true)
+		status, err := d.Deploy(ctx, files.CloudformationTemplateURL, parameters, nil, handlerID, "", true)
 		if err != nil {
 			return err
 		}
@@ -285,19 +286,19 @@ var Command = cli.Command{
 			Id:         handlerID,
 		}
 
-		result, err := cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
+		rhr, err := cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
 		if err != nil {
 			return err
 		}
 
-		switch result.StatusCode() {
-		case 201:
+		switch rhr.StatusCode() {
+		case http.StatusCreated:
 			clio.Successf("Successfully registered handler '%s' with Common Fate", handlerID)
 		default:
-			return errors.New(string(result.Body))
+			return errors.New(string(rhr.Body))
 		}
 
-		_, err = cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
+		tglr, err := cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
 			DeploymentId: handlerID,
 			Priority:     100,
 			Kind:         selectedProviderKind,
@@ -306,8 +307,35 @@ var Command = cli.Command{
 			return err
 		}
 
-		clio.Successf("TargetgroupId '%s' is successfully linked with the HandlerId '%s", targetgroupID, handlerID)
+		switch tglr.StatusCode() {
+		case http.StatusOK:
+			clio.Successf("Successfully linked Handler '%s' with Target Group '%s'", handlerID, targetgroupID)
+		default:
+			return errors.New(string(rhr.Body))
+		}
 
+		clio.Successf("TargetgroupId '%s' is successfully linked with the HandlerId '%s", targetgroupID, handlerID)
+		si := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+		si.Suffix = " waiting for Handler to become healthy"
+		si.Writer = os.Stderr
+		si.Start()
+		defer si.Stop()
+		var healthy bool
+		for !healthy {
+			ghr, err := cf.AdminGetHandlerWithResponse(ctx, handlerID)
+			if err != nil {
+				return err
+			}
+			switch rhr.StatusCode() {
+			case http.StatusOK:
+				if ghr.JSON200.Healthy {
+					clio.Success("Your handler is now healthy")
+					healthy = true
+				}
+			default:
+				return errors.New(string(rhr.Body))
+			}
+		}
 		return nil
 	},
 }

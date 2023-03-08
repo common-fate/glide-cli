@@ -68,7 +68,7 @@ var BootstrapCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-		err = bs.CopyProviderFiles(ctx, *res.JSON200)
+		_, err = bs.CopyProviderFiles(ctx, *res.JSON200)
 		if err != nil {
 			return err
 		}
