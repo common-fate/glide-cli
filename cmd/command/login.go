@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/99designs/keyring"
@@ -50,12 +49,10 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 			Message: "Your Common Fate dashboard URL",
 			Default: cfg.CurrentOrEmpty().DashboardURL,
 		}
-		survey.AskOne(prompt, &url, survey.WithValidator(survey.Required))
-	}
-
-	if url == "" {
-		// if the user presses Control+C during the survery prompt, the url will still be empty
-		return errors.New("url was empty")
+		err = survey.AskOne(prompt, &url, survey.WithValidator(survey.Required))
+		if err != nil {
+			return err
+		}
 	}
 
 	if manualPrompt {
