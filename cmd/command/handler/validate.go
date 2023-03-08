@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 
@@ -61,28 +60,23 @@ var ValidateCommand = cli.Command{
 
 		clio.Infof("Provider: %s/%s@%s\n", desc.Provider.Publisher, desc.Provider.Name, desc.Provider.Version)
 
+		schemaBytes, err := json.Marshal(desc.Schema)
+		if err != nil {
+			return err
+		}
+
+		clio.Infof("Provider Schema:\n%s", string(schemaBytes))
+
+		if len(desc.Diagnostics) > 0 {
+			clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
+		}
+
 		if desc.Healthy {
 			clio.Success("Deployment is healthy")
 
 		} else {
 			clio.Error("Deployment is unhealthy")
-
 		}
-		if len(desc.Diagnostics) > 0 {
-			clio.Infow("Deployment Diagnostics", "logs", desc.Diagnostics)
-		}
-		schemaBytes, err := json.Marshal(desc.Schema)
-		if err != nil {
-			return err
-		}
-		var prettyJSON bytes.Buffer
-		err = json.Indent(&prettyJSON, schemaBytes, "", "\t")
-		if err != nil {
-			return err
-		}
-
-		clio.Infow("Provider Schema")
-		clio.Info(prettyJSON.String())
 
 		return nil
 	},
