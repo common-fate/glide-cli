@@ -250,7 +250,8 @@ var UpdateStack = cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and name of the CloudFormation stack", Required: true},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
-		&cli.StringFlag{Name: "provider-id", Usage: "Update the provider-id for the current stack", Required: true},
+		&cli.StringFlag{Name: "provider-id", Usage: "Update the provider-id for the current stack"},
+		&cli.BoolFlag{Name: "use-previous-value", Usage: "use the previous stack values for the parameters"},
 		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
@@ -312,7 +313,8 @@ var UpdateStack = cli.Command{
 			for _, parameter := range stack.Parameters {
 
 				// update-stack shouldn't ask to update the handler-id, bootstrapBucketName
-				if contains([]string{"HandlerID", "BootstrapBucketName"}, *parameter.ParameterKey) {
+				// if the use-previous-value flag is provided then don't prompt users to reconfigure the required parameters
+				if contains([]string{"HandlerID", "BootstrapBucketName"}, *parameter.ParameterKey) || c.Bool("use-previous-value") {
 					values[*parameter.ParameterKey] = *parameter.ParameterValue
 					continue
 				}
