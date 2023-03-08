@@ -22,7 +22,7 @@ var Command = cli.Command{
 	Description: "Explore and manage Providers from the Provider Registry",
 	Usage:       "Explore and manage Providers from the Provider Registry",
 	Subcommands: []*cli.Command{
-		&BootstrapCommand,
+		mw.WithBeforeFuncs(&BootstrapCommand, mw.RequireAWSCredentials()),
 		&ListCommand,
 		mw.WithBeforeFuncs(&installCommand, mw.RequireAWSCredentials()),
 		mw.WithBeforeFuncs(&uninstallCommand, mw.RequireAWSCredentials()),

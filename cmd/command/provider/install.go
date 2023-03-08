@@ -43,7 +43,7 @@ var installCommand = cli.Command{
 		&cli.StringFlag{Name: "provider", Aliases: []string{"p"}, Usage: "The provider to deploy (for example, 'common-fate/aws@v0.4.0')"},
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and CloudFormation stack name to use (by convention, this is 'cf-handler-[provider publisher]-[provider name]')"},
 		&cli.StringFlag{Name: "target-group-id", Usage: "Override the ID of the Target Group which will be created"},
-		&cli.StringFlag{Name: "common-fate-aws-account-id", Usage: "Override the Common Fate AWS Account ID (by default the current AWS account ID is used)"},
+		&cli.StringFlag{Name: "common-fate-account-id", Usage: "Override the Common Fate AWS Account ID (by default the current AWS account ID is used)"},
 		&cli.StringFlag{Name: "target", Aliases: []string{"t"}, Usage: "The target kind to use with the provider (only required if the provider grants access to multiple kinds of targets)"},
 		&cli.BoolFlag{Name: "confirm-bootstrap", Usage: "Confirm creating a bootstrap bucket if it doesn't exist in the account and region you are deploying to"},
 		&cli.StringSliceFlag{Name: "config", Usage: "Provide config values for the provider in key=value format"},
@@ -122,7 +122,7 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		cfAccountID := c.String("common-fate-aws-account-id")
+		cfAccountID := c.String("common-fate-account-id")
 		if cfAccountID == "" {
 			clio.Warnf("using the current AWS account (%s) as the Common Fate account (use --common-fate-aws-account-id to override)", awsAccount)
 			cfAccountID = awsAccount
@@ -196,7 +196,7 @@ var installCommand = cli.Command{
 			}
 		}
 
-		lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
+		lambdaAssetPath := path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version)
 
 		var oneLinerConfigArgs []string
 
