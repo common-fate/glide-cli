@@ -69,7 +69,7 @@ require (
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/common-fate/analytics-go v0.1.0 // indirect
 	github.com/common-fate/apikit v0.2.1-0.20220526131641-1d860b34f6ed // indirect
-	github.com/common-fate/cloudform v0.3.0 // indirect
+	github.com/common-fate/cloudform v0.3.1-0.20230308001322-4bdc6347dccf // indirect
 	github.com/common-fate/ddb v0.15.0 // indirect
 	github.com/common-fate/frontmatter v0.0.0-20220825121704-2d2ec51f9c73 // indirect
 	github.com/common-fate/iso8601 v1.0.2 // indirect
