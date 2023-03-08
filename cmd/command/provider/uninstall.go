@@ -7,8 +7,8 @@ import (
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/deployer"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/cloudform/deployer"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/handlerclient"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	"github.com/urfave/cli/v2"
@@ -75,7 +75,9 @@ var uninstallCommand = cli.Command{
 		if c.Bool("delete-cloudformation-stack") {
 			clio.Infof("Deleting CloudFormation stack '%s'", handlerID)
 
-			_, err = d.Delete(ctx, handlerID, "")
+			_, err = d.Delete(ctx, deployer.DeleteOpts{
+				StackName: handlerID,
+			})
 			if err != nil {
 				return err
 			}

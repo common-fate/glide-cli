@@ -1,18 +1,18 @@
 package provider
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"os"
 
 	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
-	"github.com/common-fate/cli/pkg/bootstrapper"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/service/targetsvc"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
+	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/olekukonko/tablewriter"
 	"github.com/urfave/cli/v2"
 )
@@ -39,12 +39,11 @@ var BootstrapCommand = cli.Command{
 	},
 
 	Action: func(c *cli.Context) error {
+		ctx := c.Context
 
-		ctx := context.Background()
-
-		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
+		registry, err := registryclient.New(ctx, registryclient.WithAPIURL(c.String("registry-api-url")))
 		if err != nil {
-			return errors.New("error configuring provider registry client")
+			return err
 		}
 
 		provider, err := targetsvc.SplitProviderString(c.String("id"))
@@ -52,22 +51,19 @@ var BootstrapCommand = cli.Command{
 			return err
 		}
 		//check that the provider type matches one in our registry
-		res, err := registryClient.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
+		res, err := registry.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
 		if err != nil {
 			return err
 		}
-		switch res.StatusCode() {
-		case http.StatusOK:
-			clio.Success("Provider exists in the registry, beginning to clone assets.")
-		case http.StatusNotFound:
-			return errors.New(res.JSON404.Error)
-		case http.StatusInternalServerError:
-			return errors.New(res.JSON500.Error)
-		default:
-			return clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
+
+		clio.Success("Provider exists in the registry, beginning to clone assets.")
+
+		awsContext, err := mw.AWSContextFromContext(ctx)
+		if err != nil {
+			return err
 		}
 
-		bs, err := bootstrapper.New(ctx)
+		bs := bootstrapper.NewFromConfig(awsContext.Config)
 		if err != nil {
 			return err
 		}
@@ -94,7 +90,7 @@ var ListCommand = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 
-		ctx := context.Background()
+		ctx := c.Context
 		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
 		if err != nil {
 			return errors.New("error configuring provider registry client")

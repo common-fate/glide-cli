@@ -1,10 +1,9 @@
 package bootstrap
 
 import (
-	"context"
-
-	"github.com/common-fate/cli/pkg/bootstrapper"
+	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,19 +16,20 @@ When deploying a provider you must first copy the provider resources from the Pr
 
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
-		bucket, err := Bootstrap(ctx)
+		awsContext, err := middleware.AWSContextFromContext(ctx)
 		if err != nil {
 			return err
 		}
-		clio.Log(bucket)
+		bs := bootstrapper.NewFromConfig(awsContext.Config)
+		if err != nil {
+			return err
+		}
+
+		bucket, err := bs.GetOrDeployBootstrapBucket(ctx)
+		if err != nil {
+			return err
+		}
+		clio.Successf("bootstrap bucket created: %s", bucket.AssetsBucket)
 		return nil
 	},
-}
-
-func Bootstrap(ctx context.Context) (string, error) {
-	bs, err := bootstrapper.New(ctx)
-	if err != nil {
-		return "", err
-	}
-	return bs.GetOrDeployBootstrapBucket(ctx)
 }

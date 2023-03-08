@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"path"
 	"sort"
 	"strings"
@@ -21,18 +20,18 @@ import (
 	"github.com/common-fate/cli/cmd/command"
 	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
-	"github.com/common-fate/cli/pkg/bootstrapper"
+	"github.com/common-fate/cloudform/deployer"
+
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/deployer"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	cftypes "github.com/common-fate/common-fate/pkg/types"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/sethvargo/go-retry"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 var installCommand = cli.Command{
@@ -51,14 +50,13 @@ var installCommand = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
-		bs, err := bootstrapper.New(ctx)
-		if err != nil {
-			return err
-		}
+
 		awsContext, err := middleware.AWSContextFromContext(ctx)
 		if err != nil {
 			return err
 		}
+
+		bs := bootstrapper.NewFromConfig(awsContext.Config)
 
 		cfg, err := cfconfig.Load()
 		if err != nil {
@@ -137,45 +135,10 @@ var installCommand = cli.Command{
 			}
 		}
 
-		bootstrapStackOutput, err := bs.Detect(ctx, false)
-		if err == bootstrapper.ErrNotDeployed {
-			clio.Debug("the bootstrap stack was not detected")
-			clio.Warnf("To get started deploying providers, you need to bootstrap this AWS account and region (%s:%s)", awsContext.Account, awsContext.Config.Region)
-			clio.Info("Bootstrapping will deploy a CloudFormation stack which creates an S3 Bucket.\nProvider assets will be copied from the Common Fate Provider Registry into this bucket.\nThese assets can then be deployed into your account.")
-
-			confirm := c.Bool("confirm-bootstrap")
-
-			if !confirm {
-				// if the terminal is non-interactive (e.g. in CI/CD systems)
-				// return with an error so that we don't cause a deployment to hang forever.
-				if !term.IsTerminal(int(os.Stdin.Fd())) {
-					return errors.New("bootstrapping needs a confirmation but the terminal is non-interactive: please run 'cf install --confirm-bootstrap' to continue")
-				}
-
-				err = survey.AskOne(&survey.Confirm{Message: "Deploy bootstrap stack", Default: true}, &confirm)
-				if err != nil {
-					return err
-				}
-
-				if !confirm {
-					return errors.New("cancelling deployment")
-				}
-			}
-
-			_, err := bs.Deploy(ctx, true)
-			if err != nil {
-				return err
-			}
-			bootstrapStackOutput, err = bs.Detect(ctx, true)
-			if err != nil {
-				return err
-			}
-		}
+		bootstrapStackOutput, err := bs.GetOrDeployBootstrapBucket(ctx, deployer.WithConfirm(c.Bool("confirm-bootstrap")))
 		if err != nil {
 			return err
 		}
-
-		clio.Debugw("completed bootstrapping", "bootstrap-output", bootstrapStackOutput)
 
 		var kinds []string
 		for kind := range *provider.Schema.Targets {
@@ -327,7 +290,12 @@ var installCommand = cli.Command{
 
 		clio.Infof("Deploying CloudFormation stack for Handler '%s'", handlerID)
 
-		status, err := d.Deploy(ctx, files.CloudformationTemplateURL, parameters, nil, handlerID, "", true)
+		status, err := d.Deploy(ctx, deployer.DeployOpts{
+			Template:  files.CloudformationTemplateURL,
+			Params:    parameters,
+			StackName: handlerID,
+			Confirm:   true,
+		})
 		if err != nil {
 			return err
 		}
