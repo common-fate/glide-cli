@@ -77,7 +77,7 @@ var installCommand = cli.Command{
 			if err != nil {
 				return err
 			}
-			clio.Infof("retrieving provider details for '%s' from the Provider Registry...", providerArg)
+			clio.Infof("Retrieving provider details for '%s' from the Provider Registry...", providerArg)
 			res, err := registry.GetProviderWithResponse(ctx, p.Publisher, p.Name, p.Version)
 			if err != nil {
 				return err
