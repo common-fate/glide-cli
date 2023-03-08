@@ -18,8 +18,8 @@ import (
 
 var Command = cli.Command{
 	Name:        "provider",
-	Description: "Prepare a provider from the registry for deployment into your account",
-	Usage:       "Prepare a provider from the registry for deployment into your account",
+	Description: "Explore and manage Providers from the Provider Registry",
+	Usage:       "Explore and manage Providers from the Provider Registry",
 	Subcommands: []*cli.Command{
 		&BootstrapCommand,
 		&ListCommand,
@@ -28,8 +28,8 @@ var Command = cli.Command{
 
 var BootstrapCommand = cli.Command{
 	Name:        "bootstrap",
-	Description: "Bootstrapping a provider will clone the assets from the Common Fate registry to the bootstrap bucket in your account.",
-	Usage:       "Bootstrapping a provider will clone the assets from the Common Fate registry to the bootstrap bucket in your account.",
+	Description: "Before you can deploy a Provider, you will need to bootstrap it. This process will copy the files from the Provider Registry to your bootstrap bucket.",
+	Usage:       "Copy a Provider into your AWS account",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
