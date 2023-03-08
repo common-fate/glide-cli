@@ -39,6 +39,7 @@ func New(ctx context.Context) (*Deployer, error) {
 const noChangeFoundMsg = "The submitted information didn't contain changes. Submit different information to create a change set."
 
 // Deploy deploys a stack and returns the final status
+// template can be either a URL or a template body
 func (b *Deployer) Deploy(ctx context.Context, template string, params []types.Parameter, tags map[string]string, stackName string, roleArn string, confirm bool) (string, error) {
 
 	changeSetName, createErr := b.cloudformClient.CreateChangeSet(ctx, string(template), params, tags, stackName, "")
