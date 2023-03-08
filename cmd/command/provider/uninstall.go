@@ -67,7 +67,7 @@ var uninstallCommand = cli.Command{
 		if err != nil {
 			// log errors but still continue, as the handler may be in a totally invalid
 			// state which prevents us from calling the Describe API
-			clio.Errorf("Error when describing handler (continuing with deletion anyway): %s", err.Error())
+			clio.Errorf("Error when describing Handler Lambda function (continuing with deletion anyway): %s", err.Error())
 		}
 
 		d := deployer.NewFromConfig(awsContext.Config)
