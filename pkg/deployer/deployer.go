@@ -61,7 +61,7 @@ func (b *Deployer) Deploy(ctx context.Context, template string, params []types.P
 
 	if createErr != nil {
 		if createErr.Error() == noChangeFoundMsg {
-			clio.Success("Change set was created, but there is no change. Deploy was skipped.")
+			clio.Info("Skipped deployment (there are no changes in the changeset)")
 			return "DEPLOY_SKIPPED", nil
 		} else {
 			return "", errors.Wrap(createErr, "creating changeset")
