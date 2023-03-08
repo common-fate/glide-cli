@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go"
 	"github.com/briandowns/spinner"
+	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/cfaws"
 	"github.com/urfave/cli/v2"
@@ -82,7 +83,7 @@ https://docs.commonfate.io/granted-approvals/troubleshooting/aws-credentials
 			Account: *out.Account,
 			Config:  cfg,
 		}
-
+		clio.Debugw("detected the aws context", "awsAccount", a.Account, "awsRegion", a.Config.Region)
 		c.Context = SetAWSContextInContext(ctx, a)
 		return nil
 	}

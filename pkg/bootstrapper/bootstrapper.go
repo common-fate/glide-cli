@@ -3,23 +3,20 @@ package bootstrapper
 import (
 	"context"
 	"embed"
-	"os"
-	"time"
+	"net/url"
+	"path"
 
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
-	"github.com/briandowns/spinner"
+	"github.com/common-fate/cli/pkg/deployer"
 	"github.com/common-fate/clio"
-	"github.com/common-fate/cloudform/cfn"
-	"github.com/common-fate/cloudform/console"
-	"github.com/common-fate/cloudform/ui"
 	"github.com/common-fate/common-fate/pkg/cfaws"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
@@ -29,23 +26,14 @@ var cloudformationTemplates embed.FS
 
 const BootstrapStackName = "CommonFateProviderAssetsBootstrapStack"
 
-// check for bootstap bucket
-
-// deploy bootstrap if required
-
-// copy provider assets
-
-// deploy provider with asset path
-
 type BootstrapStackOutput struct {
 	AssetsBucket string `json:"AssetsBucket"`
 }
 
 type Bootstrapper struct {
-	cfnClient       *cloudformation.Client
-	cloudformClient *cfn.Cfn
-	s3Client        *s3.Client
-	uiClient        *ui.UI
+	cfnClient *cloudformation.Client
+	s3Client  *s3.Client
+	deployer  *deployer.Deployer
 }
 
 func New(ctx context.Context) (*Bootstrapper, error) {
@@ -54,11 +42,14 @@ func New(ctx context.Context) (*Bootstrapper, error) {
 		return nil, err
 	}
 
+	deploy, err := deployer.New(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &Bootstrapper{
-		cfnClient:       cloudformation.NewFromConfig(cfg),
-		s3Client:        s3.NewFromConfig(cfg),
-		cloudformClient: cfn.New(cfg),
-		uiClient:        ui.New(cfg),
+		cfnClient: cloudformation.NewFromConfig(cfg),
+		s3Client:  s3.NewFromConfig(cfg),
+		deployer:  deploy,
 	}, nil
 }
 
@@ -100,8 +91,6 @@ func ProcessOutputs(stack types.Stack) (*BootstrapStackOutput, error) {
 
 }
 
-const noChangeFoundMsg = "The submitted information didn't contain changes. Submit different information to create a change set."
-
 // Deploy deploys a stack and returns the final status
 func (b *Bootstrapper) Deploy(ctx context.Context, confirm bool) (string, error) {
 
@@ -110,57 +99,7 @@ func (b *Bootstrapper) Deploy(ctx context.Context, confirm bool) (string, error)
 		return "", errors.Wrap(err, "error while loading template from embedded filesystem")
 	}
 
-	changeSetName, createErr := b.cloudformClient.CreateChangeSet(ctx, string(template), []types.Parameter{}, map[string]string{}, BootstrapStackName, "")
-
-	si := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
-	si.Suffix = " creating CloudFormation change set"
-	si.Writer = os.Stderr
-	si.Start()
-	si.Stop()
-
-	if createErr != nil {
-		if createErr.Error() == noChangeFoundMsg {
-			clio.Success("Change set was created, but there is no change. Deploy was skipped.")
-			return "DEPLOY_SKIPPED", nil
-		} else {
-			return "", errors.Wrap(createErr, "creating changeset")
-		}
-	}
-
-	if !confirm {
-		status, err := b.uiClient.FormatChangeSet(ctx, BootstrapStackName, changeSetName)
-		if err != nil {
-			return "", err
-		}
-		clio.Info("The following CloudFormation changes will be made:")
-		fmt.Println(status)
-
-		p := &survey.Confirm{Message: "Do you wish to continue?", Default: true}
-		err = survey.AskOne(p, &confirm)
-		if err != nil {
-			return "", err
-		}
-		if !confirm {
-			return "", errors.New("user cancelled deployment")
-		}
-	}
-
-	err = b.cloudformClient.ExecuteChangeSet(ctx, BootstrapStackName, changeSetName)
-	if err != nil {
-		return "", err
-	}
-
-	status, messages := b.uiClient.WaitForStackToSettle(ctx, BootstrapStackName)
-
-	fmt.Println("Final stack status:", ui.ColouriseStatus(status))
-
-	if len(messages) > 0 {
-		fmt.Println(console.Yellow("Messages:"))
-		for _, message := range messages {
-			fmt.Printf("  - %s\n", message)
-		}
-	}
-	return status, nil
+	return b.deployer.Deploy(ctx, string(template), []types.Parameter{}, map[string]string{}, BootstrapStackName, "", true)
 }
 
 // GetOrDeployBootstrap loads the output if the stack already exists, else it deploys the bootstrap stack first
@@ -181,4 +120,34 @@ func (b *Bootstrapper) GetOrDeployBootstrapBucket(ctx context.Context) (string, 
 		return "", err
 	}
 	return out.AssetsBucket, nil
+}
+
+// CopyProviderFiles will clone the handler and cfn template from the registry bucket to the bootstrap bucket of the current account
+func (b *Bootstrapper) CopyProviderFiles(ctx context.Context, provider providerregistrysdk.ProviderDetail) error {
+	// detect the bootstrap bucket
+	out, err := b.Detect(ctx)
+	if err != nil {
+		return err
+	}
+
+	lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
+	clio.Infof("Copying the handler.zip into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "handler.zip"))
+	_, err = b.s3Client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(out.AssetsBucket),
+		Key:        aws.String(path.Join(lambdaAssetPath, "handler.zip")),
+		CopySource: aws.String(url.QueryEscape(provider.LambdaAssetS3Arn)),
+	})
+	if err != nil {
+		return err
+	}
+	clio.Successf("Successfully copied the handler.zip into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "handler.zip"))
+
+	clio.Infof("Copying the cloudformation template into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "cloudformation.json"))
+	_, err = b.s3Client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(out.AssetsBucket),
+		Key:        aws.String(path.Join(lambdaAssetPath, "cloudformation.json")),
+		CopySource: aws.String(url.QueryEscape(provider.CfnTemplateS3Arn)),
+	})
+	clio.Successf("Successfully copied the cloudformation template into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "cloudformation.json"))
+	return err
 }
