@@ -2,15 +2,29 @@ package install
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"path"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/common-fate/cli/cmd/command"
 	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cli/pkg/bootstrapper"
+	"github.com/common-fate/cli/pkg/client"
+	cfconfig "github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/deployer"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
+	cftypes "github.com/common-fate/common-fate/pkg/types"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	"github.com/urfave/cli/v2"
 )
@@ -122,13 +136,177 @@ var Command = cli.Command{
 			return err
 		}
 
-		clio.Infof("You have selected to deploy: %s@%s and use the target Kind: %s", selectedProviderType, selectedProviderVersion, selectedProviderKind)
+		// clio.Infof("You have selected to deploy: %s@%s and use the target Kind: %s", selectedProviderType, selectedProviderVersion, selectedProviderKind)
 		clio.Info("Beginning to copy files from the registry to the bootstrap bucket")
 		err = bs.CopyProviderFiles(ctx, provider)
 		if err != nil {
 			return err
 		}
 		clio.Success("Completed copying files from the registry to the bootstrap bucket")
+
+		handlerID := strings.Join([]string{"cf-handler", provider.Publisher, provider.Name}, "-")
+		lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
+
+		var parameters []types.Parameter
+
+		config := provider.Schema.Config
+		if config != nil {
+			clio.Info("This Provider requires following configuration values to be configured.")
+			clio.Info("Enter the value of these configurations:")
+			for k, v := range *config {
+
+				if v.Secret != nil && *v.Secret {
+					client := ssm.NewFromConfig(awsContext.Config)
+
+					var secret string
+					name := command.SSMKey(command.SSMKeyOpts{
+						HandlerID:    handlerID,
+						Key:          k,
+						Publisher:    provider.Publisher,
+						ProviderName: provider.Name,
+					})
+					helpMsg := fmt.Sprintf("This will be stored in AWS SSM Parameter Store with name '%s'", name)
+					err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
+					if err != nil {
+						return err
+					}
+
+					_, err = client.PutParameter(ctx, &ssm.PutParameterInput{
+						Name:      aws.String(name),
+						Value:     aws.String(secret),
+						Type:      ssmTypes.ParameterTypeSecureString,
+						Overwrite: aws.Bool(true),
+					})
+					if err != nil {
+						return err
+					}
+
+					clio.Successf("Added to AWS SSM Parameter Store with name '%s'", name)
+
+					parameters = append(parameters, types.Parameter{
+						ParameterKey:   aws.String(command.ConvertToPascalCase(k) + "Secret"),
+						ParameterValue: aws.String(name),
+					})
+
+					continue
+				}
+
+				var v string
+				err = survey.AskOne(&survey.Input{Message: k + ":"}, &v)
+				if err != nil {
+					return err
+				}
+
+				parameters = append(parameters, types.Parameter{
+					ParameterKey:   aws.String(command.ConvertToPascalCase(k)),
+					ParameterValue: aws.String(v),
+				})
+			}
+		}
+
+		parameters = append(parameters, types.Parameter{
+			ParameterKey:   aws.String("CommonFateAWSAccountID"),
+			ParameterValue: &awsContext.Account,
+		})
+
+		parameters = append(parameters, types.Parameter{
+			ParameterKey:   aws.String("AssetPath"),
+			ParameterValue: aws.String(path.Join(lambdaAssetPath, "handler.zip")),
+		})
+
+		parameters = append(parameters, types.Parameter{
+			ParameterKey:   aws.String("BootstrapBucketName"),
+			ParameterValue: aws.String(bootstrapStackOutput.AssetsBucket),
+		})
+
+		parameters = append(parameters, types.Parameter{
+			ParameterKey:   aws.String("HandlerID"),
+			ParameterValue: aws.String(handlerID),
+		})
+
+		s3client := s3.NewFromConfig(awsContext.Config)
+		preSignedClient := s3.NewPresignClient(s3client)
+
+		presigner := command.Presigner{
+			PresignClient: preSignedClient,
+		}
+
+		req, err := presigner.GetObject(bootstrapStackOutput.AssetsBucket, path.Join(lambdaAssetPath, "cloudformation.json"), int64(time.Hour))
+		if err != nil {
+			return nil
+		}
+
+		d, err := deployer.New(ctx)
+		if err != nil {
+			return err
+		}
+
+		clio.Infof("Deploying Cloudformation stack '%s'", handlerID, d, req)
+
+		status, err := d.Deploy(ctx, req.URL, parameters, nil, handlerID, "", true)
+		if err != nil {
+			return err
+		}
+
+		clio.Infof("Deployment completed with status '%s'", status)
+
+		cfg, err := cfconfig.Load()
+		if err != nil {
+			return err
+		}
+
+		cf, err := client.FromConfig(ctx, cfg)
+		if err != nil {
+			return err
+		}
+
+		targetgroupID := strings.Join([]string{provider.Publisher, provider.Name}, "-")
+
+		targetgroupRes, err := cf.AdminCreateTargetGroupWithResponse(ctx, cftypes.AdminCreateTargetGroupJSONRequestBody{
+			Id:           targetgroupID,
+			TargetSchema: provider.Publisher + "/" + provider.Name + "@" + provider.Version + "/" + selectedProviderKind,
+		})
+		if err != nil {
+			return err
+		}
+		switch targetgroupRes.StatusCode() {
+		case http.StatusCreated:
+			clio.Successf("Successfully created the targetgroup: %s", targetgroupID)
+		default:
+			return clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
+		}
+
+		// register the targetgroup with handler
+
+		reqBody := cftypes.AdminRegisterHandlerJSONRequestBody{
+			AwsAccount: awsContext.Account,
+			AwsRegion:  awsContext.Config.Region,
+			Runtime:    "aws-lambda",
+			Id:         handlerID,
+		}
+
+		result, err := cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
+		if err != nil {
+			return err
+		}
+
+		switch result.StatusCode() {
+		case 201:
+			clio.Successf("Successfully registered handler '%s' with Common Fate", handlerID)
+		default:
+			return errors.New(string(result.Body))
+		}
+
+		_, err = cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
+			DeploymentId: handlerID,
+			Priority:     100,
+			Kind:         selectedProviderKind,
+		})
+		if err != nil {
+			return err
+		}
+
+		clio.Successf("TargetgroupId '%s' is successfully linked with the HandlerId '%s", targetgroupID, handlerID)
 
 		return nil
 	},

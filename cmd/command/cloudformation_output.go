@@ -160,7 +160,7 @@ var CreateStack = cli.Command{
 						client := ssm.NewFromConfig(awsCfg)
 
 						var secret string
-						name := ssmKey(ssmKeyOpts{
+						name := SSMKey(SSMKeyOpts{
 							HandlerID:    handlerID,
 							Key:          k,
 							Publisher:    provider.Publisher,
@@ -403,7 +403,7 @@ var UpdateStack = cli.Command{
 	},
 }
 
-type ssmKeyOpts struct {
+type SSMKeyOpts struct {
 	HandlerID    string
 	Key          string
 	Publisher    string
@@ -412,7 +412,7 @@ type ssmKeyOpts struct {
 
 // this will create a unique identifier for AWS System Manager Parameter Store
 // for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
-func ssmKey(opts ssmKeyOpts) string {
+func SSMKey(opts SSMKeyOpts) string {
 	return "awsssm:///" + path.Join("common-fate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
 }
 
