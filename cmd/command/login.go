@@ -108,9 +108,15 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 
 		// update the config file
 		cfg.CurrentContext = "default"
-		cfg.Contexts["default"] = config.Context{
-			DashboardURL: res.DashboardURL,
+
+		// is it a new URL if so, add it and reset config
+		// otherwise it stays the same (which will preserve existing config; api_url)
+		if cfg.Contexts["default"].DashboardURL != res.DashboardURL {
+			cfg.Contexts["default"] = config.Context{
+				DashboardURL: res.DashboardURL,
+			}
 		}
+
 		err = config.Save(cfg)
 		if err != nil {
 			return err
