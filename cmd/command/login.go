@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/99designs/keyring"
@@ -43,24 +42,15 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 		url = c.Args().First()
 	}
 
-	var manualPrompt bool
 	if url == "" {
-		manualPrompt = true
 		prompt := &survey.Input{
 			Message: "Your Common Fate dashboard URL",
 			Default: cfg.CurrentOrEmpty().DashboardURL,
 		}
-		survey.AskOne(prompt, &url, survey.WithValidator(survey.Required))
-	}
-
-	if url == "" {
-		// if the user presses Control+C during the survery prompt, the url will still be empty
-		return errors.New("url was empty")
-	}
-
-	if manualPrompt {
-		// display a hint to the user
-		clio.Infof("log in faster next time by running: '%s %s %s'", c.App.Name, c.Command.FullName(), url)
+		err = survey.AskOne(prompt, &url, survey.WithValidator(survey.Required))
+		if err != nil {
+			return err
+		}
 	}
 
 	ctx := c.Context

@@ -7,9 +7,11 @@ import (
 	"github.com/common-fate/cli/cmd/command/bootstrap"
 	"github.com/common-fate/cli/cmd/command/config"
 	"github.com/common-fate/cli/cmd/command/handler"
+
 	"github.com/common-fate/cli/cmd/command/provider"
 	"github.com/common-fate/cli/cmd/command/rules"
 	"github.com/common-fate/cli/cmd/command/targetgroup"
+	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
@@ -25,17 +27,25 @@ func main() {
 		Version:   build.Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "api-url", Usage: "override the Common Fate API URL"},
+			&cli.BoolFlag{Name: "verbose", Usage: "Enable verbose logging, effectively sets environment variable CF_LOG=DEBUG"},
+		},
+		Before: func(ctx *cli.Context) error {
+			if ctx.Bool("verbose") {
+				clio.SetLevelFromString("debug")
+			}
+
+			return nil
 		},
 		Commands: []*cli.Command{
 			&command.Login,
 			&command.Logout,
+			&config.Command,
 			&rules.Command,
-			&bootstrap.Command,
 			&provider.Command,
 			&targetgroup.Command,
-			&config.Command,
 			&handler.Command,
-			&command.GenerateCfOutput,
+			mw.WithBeforeFuncs(&bootstrap.Command, mw.RequireAWSCredentials()),
+			mw.WithBeforeFuncs(&command.GenerateCfOutput, mw.RequireAWSCredentials()),
 		},
 	}
 	clio.SetLevelFromEnv("CF_LOG")

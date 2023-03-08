@@ -1,53 +1,49 @@
 package provider
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
 
-	aws_config "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go/aws"
+	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/service/targetsvc"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
+	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/olekukonko/tablewriter"
 	"github.com/urfave/cli/v2"
 )
 
 var Command = cli.Command{
 	Name:        "provider",
-	Description: "Prepare a provider from the registry for deployment into your account",
-	Usage:       "Prepare a provider from the registry for deployment into your account",
+	Description: "Explore and manage Providers from the Provider Registry",
+	Usage:       "Explore and manage Providers from the Provider Registry",
 	Subcommands: []*cli.Command{
-		&BootstrapCommand,
+		mw.WithBeforeFuncs(&BootstrapCommand, mw.RequireAWSCredentials()),
 		&ListCommand,
+		mw.WithBeforeFuncs(&installCommand, mw.RequireAWSCredentials()),
+		mw.WithBeforeFuncs(&uninstallCommand, mw.RequireAWSCredentials()),
 	},
 }
 
 var BootstrapCommand = cli.Command{
 	Name:        "bootstrap",
-	Description: "Bootstrapping a provider will clone the assets from the Common Fate registry to the bootstrap bucket in your account.",
-	Usage:       "Bootstrapping a provider will clone the assets from the Common Fate registry to the bootstrap bucket in your account.",
+	Description: "Before you can deploy a Provider, you will need to bootstrap it. This process will copy the files from the Provider Registry to your bootstrap bucket.",
+	Usage:       "Copy a Provider into your AWS account",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "id", Required: true, Usage: "publisher/name@version"},
-		&cli.StringFlag{Name: "bootstrap-bucket", Required: true, Aliases: []string{"bb"}, Usage: "The name of the bootstrap bucket to copy assets into", EnvVars: []string{"DEPLOYMENT_BUCKET"}},
 		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 
 	Action: func(c *cli.Context) error {
+		ctx := c.Context
 
-		ctx := context.Background()
-
-		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
+		registry, err := registryclient.New(ctx, registryclient.WithAPIURL(c.String("registry-api-url")))
 		if err != nil {
-			return errors.New("error configuring provider registry client")
+			return err
 		}
 
 		provider, err := targetsvc.SplitProviderString(c.String("id"))
@@ -55,61 +51,27 @@ var BootstrapCommand = cli.Command{
 			return err
 		}
 		//check that the provider type matches one in our registry
-		res, err := registryClient.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
+		res, err := registry.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
 		if err != nil {
 			return err
 		}
-		switch res.StatusCode() {
-		case http.StatusOK:
-			clio.Success("Provider exists in the registry, beginning to clone assets.")
-		case http.StatusNotFound:
-			return errors.New(res.JSON404.Error)
-		case http.StatusInternalServerError:
-			return errors.New(res.JSON500.Error)
-		default:
-			return clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
-		}
 
-		//get bootstrap bucket
+		clio.Success("Provider exists in the registry, beginning to clone assets.")
 
-		//read from flag
-		bootstrapBucket := c.String("bootstrap-bucket")
-
-		//work out the lambda asset path
-		lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
-
-		//copy the provider assets into the bucket (this will also copy the cloudformation template too)
-		awsCfg, err := aws_config.LoadDefaultConfig(ctx)
+		awsContext, err := mw.AWSContextFromContext(ctx)
 		if err != nil {
 			return err
 		}
-		client := s3.NewFromConfig(awsCfg)
 
-		clio.Infof("Copying the handler.zip into %s", path.Join(bootstrapBucket, lambdaAssetPath, "handler.zip"))
-		_, err = client.CopyObject(ctx, &s3.CopyObjectInput{
-			Bucket:     aws.String(bootstrapBucket),
-			Key:        aws.String(path.Join(lambdaAssetPath, "handler.zip")),
-			CopySource: aws.String(url.QueryEscape(res.JSON200.LambdaAssetS3Arn)),
-		})
+		bs := bootstrapper.NewFromConfig(awsContext.Config)
 		if err != nil {
 			return err
 		}
-		clio.Successf("Successfully copied the handler.zip into %s", path.Join(bootstrapBucket, lambdaAssetPath, "handler.zip"))
-
-		clio.Infof("Copying the cloudformation template into %s", path.Join(bootstrapBucket, lambdaAssetPath, "cloudformation.json"))
-		_, err = client.CopyObject(ctx, &s3.CopyObjectInput{
-			Bucket:     aws.String(bootstrapBucket),
-			Key:        aws.String(path.Join(lambdaAssetPath, "cloudformation.json")),
-			CopySource: aws.String(url.QueryEscape(res.JSON200.CfnTemplateS3Arn)),
-		})
+		_, err = bs.CopyProviderFiles(ctx, *res.JSON200)
 		if err != nil {
 			return err
 		}
-		clio.Successf("Successfully copied the cloudformation template into %s", path.Join(bootstrapBucket, lambdaAssetPath, "cloudformation.json"))
-		templateURL := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bootstrapBucket, awsCfg.Region, path.Join(lambdaAssetPath, "cloudformation.json"))
-		clio.Info("Use the following cloudformation template URL to deploy this handler")
-		clio.Info(templateURL)
-		// clio.Infof("aws cloudformation create-stack --stack-name=<handler id> --template-url=%s --capabilities=CAPABILITY_IAM", templateURL)
+
 		return nil
 	},
 }
@@ -128,7 +90,7 @@ var ListCommand = cli.Command{
 	},
 	Action: func(c *cli.Context) error {
 
-		ctx := context.Background()
+		ctx := c.Context
 		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
 		if err != nil {
 			return errors.New("error configuring provider registry client")

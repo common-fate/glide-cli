@@ -17,11 +17,11 @@ var ValidateCommand = cli.Command{
 	Description: "Validate a handler by invoking the handler directly",
 	Usage:       "Validate a handler",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true, Usage: "The ID of the handler, when deploying via cloudformation this is the HandlerID parameter that you configured. e.g 'aws-sso'"},
+		&cli.StringFlag{Name: "id", Required: true, Usage: "The ID of the handler, when deploying via CloudFormation this is the HandlerID parameter that you configured. e.g 'aws-sso'"},
 		&cli.StringFlag{Name: "aws-region", Required: true},
 		// commented out for now as there is only one runtimne
 		&cli.StringFlag{Name: "runtime", Required: true, Value: "aws-lambda"},
-		&cli.StringFlag{Name: "cloudformation-stack-name", Usage: "If Cloudformation was used to deploy the provider, use this flag to check the status of the stack"},
+		&cli.StringFlag{Name: "cloudformation-stack-name", Usage: "If CloudFormation was used to deploy the provider, use this flag to check the status of the stack"},
 	},
 	Action: func(c *cli.Context) error {
 		id := c.String("id")
