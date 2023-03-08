@@ -250,6 +250,8 @@ var UpdateStack = cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and name of the CloudFormation stack", Required: true},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
+		&cli.StringFlag{Name: "provider-id", Usage: "Update the provider-id for the current stack", Required: true},
+		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
 		stackname := c.String("handler-id")
@@ -273,9 +275,47 @@ var UpdateStack = cli.Command{
 
 		if len(out.Stacks) > 0 {
 			stack := out.Stacks[0]
-
 			values := make(map[string]string)
+
+			// if the provider-id is provided then update the lambda-assets-handler path to the new version.
+			if c.String("provider-id") != "" {
+
+				// Check if the provided provider-id is present in the provider registry
+				registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
+				if err != nil {
+					return errors.New("error configuring provider registry client")
+				}
+
+				provider, err := targetsvc.SplitProviderString(c.String("provider-id"))
+				if err != nil {
+					return err
+				}
+
+				res, err := registryClient.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
+				if err != nil {
+					return err
+				}
+
+				switch res.StatusCode() {
+				case http.StatusOK:
+					values["AssetPath"] = path.Join(provider.Publisher, provider.Name, provider.Version, "handler.zip")
+				case http.StatusNotFound:
+					return errors.New(res.JSON404.Error)
+				case http.StatusInternalServerError:
+					return errors.New(res.JSON500.Error)
+				default:
+					return clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
+				}
+
+			}
+
 			for _, parameter := range stack.Parameters {
+
+				// update-stack shouldn't ask to update the handler-id, bootstrapBucketName
+				if contains([]string{"HandlerID", "BootstrapBucketName"}, *parameter.ParameterKey) {
+					values[*parameter.ParameterKey] = *parameter.ParameterValue
+					continue
+				}
 
 				// secret values have this prefix so need to update the SSM parameter store for these keys
 				if strings.HasPrefix(*parameter.ParameterValue, "awsssm:///common-fate/provider/") {
@@ -310,6 +350,11 @@ var UpdateStack = cli.Command{
 						clio.Successf("Updated value in AWS System Manager Parameter Store for key with name '%s'", name)
 					}
 
+					continue
+				}
+
+				// overwrite the value with provided provider-id
+				if c.String("provider-id") != "" && *parameter.ParameterKey == "AssetPath" {
 					continue
 				}
 
@@ -367,4 +412,15 @@ type ssmKeyOpts struct {
 // for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
 func ssmKey(opts ssmKeyOpts) string {
 	return "awsssm:///" + path.Join("common-fate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
+}
+
+// utility function to check if the string belongs to the slice.
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
 }
