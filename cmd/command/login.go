@@ -42,9 +42,7 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 		url = c.Args().First()
 	}
 
-	var manualPrompt bool
 	if url == "" {
-		manualPrompt = true
 		prompt := &survey.Input{
 			Message: "Your Common Fate dashboard URL",
 			Default: cfg.CurrentOrEmpty().DashboardURL,
@@ -53,11 +51,6 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	if manualPrompt {
-		// display a hint to the user
-		clio.Infof("log in faster next time by running: '%s %s %s'", c.App.Name, c.Command.FullName(), url)
 	}
 
 	ctx := c.Context

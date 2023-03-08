@@ -413,7 +413,7 @@ type SSMKeyOpts struct {
 // this will create a unique identifier for AWS System Manager Parameter Store
 // for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
 func SSMKey(opts SSMKeyOpts) string {
-	return "awsssm:///" + path.Join("common-fate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
+	return "/" + path.Join("common-fate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
 }
 
 // utility function to check if the string belongs to the slice.

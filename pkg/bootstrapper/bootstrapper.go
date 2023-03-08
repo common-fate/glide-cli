@@ -157,7 +157,7 @@ func (b *Bootstrapper) CopyProviderFiles(ctx context.Context, provider providerr
 	}
 
 	lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
-	clio.Infof("Copying the handler.zip into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "handler.zip"))
+	clio.Debugf("Copying the handler.zip into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "handler.zip"))
 	_, err = b.s3Client.CopyObject(ctx, &s3.CopyObjectInput{
 		Bucket:     aws.String(out.AssetsBucket),
 		Key:        aws.String(path.Join(lambdaAssetPath, "handler.zip")),
@@ -166,9 +166,9 @@ func (b *Bootstrapper) CopyProviderFiles(ctx context.Context, provider providerr
 	if err != nil {
 		return nil, err
 	}
-	clio.Successf("Successfully copied the handler.zip into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "handler.zip"))
+	clio.Debugf("Successfully copied the handler.zip into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "handler.zip"))
 
-	clio.Infof("Copying the cloudformation template into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "cloudformation.json"))
+	clio.Debugf("Copying the CloudFormation template into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "cloudformation.json"))
 	_, err = b.s3Client.CopyObject(ctx, &s3.CopyObjectInput{
 		Bucket:     aws.String(out.AssetsBucket),
 		Key:        aws.String(path.Join(lambdaAssetPath, "cloudformation.json")),
@@ -177,7 +177,7 @@ func (b *Bootstrapper) CopyProviderFiles(ctx context.Context, provider providerr
 	if err != nil {
 		return nil, err
 	}
-	clio.Successf("Successfully copied the cloudformation template into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "cloudformation.json"))
+	clio.Debugf("Successfully copied the CloudFormation template into %s", path.Join(out.AssetsBucket, lambdaAssetPath, "cloudformation.json"))
 
 	return &ProviderFiles{
 		CloudformationTemplateURL: fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", out.AssetsBucket, b.cfg.Region, path.Join(lambdaAssetPath, "cloudformation.json")),

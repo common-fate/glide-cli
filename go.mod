@@ -12,21 +12,24 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.15
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.22.2
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.15.10
+	github.com/aws/aws-sdk-go-v2/service/iam v1.18.13
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.3
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.28.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5
 	github.com/aws/smithy-go v1.13.5
 	github.com/briandowns/spinner v1.18.1
 	github.com/common-fate/clio v1.1.0
-	github.com/common-fate/cloudform v0.3.1-0.20230308001322-4bdc6347dccf
+	github.com/common-fate/cloudform v0.4.0
 	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307173427-69fa64381342
-	github.com/common-fate/provider-registry-sdk-go v0.11.0
+	github.com/common-fate/provider-registry-sdk-go v0.13.1-0.20230308135441-87f081d4cc23
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
+	github.com/sethvargo/go-retry v0.2.3
 	github.com/urfave/cli/v2 v2.24.1
 	golang.org/x/oauth2 v0.4.0
+	golang.org/x/term v0.5.0
 )
 
 require (
@@ -49,7 +52,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecs v1.18.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/eks v1.21.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/iam v1.18.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/identitystore v1.15.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.11 // indirect
@@ -106,6 +108,8 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/labstack/echo/v4 v4.9.1 // indirect
+	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/magefile/mage v1.13.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
@@ -125,15 +129,17 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
-	github.com/sethvargo/go-retry v0.2.3 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

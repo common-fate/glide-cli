@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cli/pkg/bootstrapper"
 	"github.com/common-fate/clio"
@@ -23,6 +24,8 @@ var Command = cli.Command{
 	Subcommands: []*cli.Command{
 		&BootstrapCommand,
 		&ListCommand,
+		mw.WithBeforeFuncs(&installCommand, mw.RequireAWSCredentials()),
+		mw.WithBeforeFuncs(&uninstallCommand, mw.RequireAWSCredentials()),
 	},
 }
 

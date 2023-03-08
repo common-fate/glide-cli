@@ -7,7 +7,7 @@ import (
 	"github.com/common-fate/cli/cmd/command/bootstrap"
 	"github.com/common-fate/cli/cmd/command/config"
 	"github.com/common-fate/cli/cmd/command/handler"
-	"github.com/common-fate/cli/cmd/command/install"
+
 	"github.com/common-fate/cli/cmd/command/provider"
 	"github.com/common-fate/cli/cmd/command/rules"
 	"github.com/common-fate/cli/cmd/command/targetgroup"
@@ -46,7 +46,6 @@ func main() {
 			&handler.Command,
 			mw.WithBeforeFuncs(&bootstrap.Command, mw.RequireAWSCredentials()),
 			mw.WithBeforeFuncs(&command.GenerateCfOutput, mw.RequireAWSCredentials()),
-			mw.WithBeforeFuncs(&install.Command, mw.RequireAWSCredentials()),
 		},
 	}
 	clio.SetLevelFromEnv("CF_LOG")
