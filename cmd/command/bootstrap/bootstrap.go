@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"errors"
+	"context"
 
 	"github.com/common-fate/cli/pkg/bootstrapper"
 	"github.com/common-fate/clio"
@@ -15,20 +15,19 @@ var Command = cli.Command{
 
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
-		cloud := c.Args().First()
-		if cloud == "" || cloud != "aws" {
-			return errors.New("cloud argument must be supplied, supports clouds are [aws]")
-		}
-
-		bs, err := bootstrapper.New(ctx)
+		bucket, err := Bootstrap(ctx)
 		if err != nil {
 			return err
 		}
-		bootstrapBucket, err := bs.GetOrDeployBootstrapBucket(ctx)
-		if err != nil {
-			return err
-		}
-		clio.Log(bootstrapBucket)
+		clio.Log(bucket)
 		return nil
 	},
+}
+
+func Bootstrap(ctx context.Context) (string, error) {
+	bs, err := bootstrapper.New(ctx)
+	if err != nil {
+		return "", err
+	}
+	return bs.GetOrDeployBootstrapBucket(ctx)
 }
