@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
 )
 
 // awsExports is the aws-exports.json file
@@ -57,6 +58,18 @@ type Exports struct {
 	RegistryAPIURL string `toml:"registry_api_url" json:"registry_api_url"`
 	ClientID       string `toml:"client_id" json:"client_id"`
 	DashboardURL   string `toml:"dashboard_url" json:"dashboard_url"`
+}
+
+func (e Exports) OAuthConfig() *oauth2.Config {
+	return &oauth2.Config{
+		RedirectURL: "http://localhost:18900/auth/cognito/callback",
+		ClientID:    e.ClientID,
+		Scopes:      []string{"openid", "email"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  e.AuthURL,
+			TokenURL: e.TokenURL,
+		},
+	}
 }
 
 // FetchExports fetches and parses the aws-exports.json

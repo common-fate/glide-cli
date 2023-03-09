@@ -2,10 +2,8 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -18,11 +16,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/common-fate/cli/internal/build"
+
 	"github.com/common-fate/clio"
-	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/service/targetsvc"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
+	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -92,153 +91,139 @@ var CreateStack = cli.Command{
 		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The ID of the Handler (for example, 'cf-handler-aws')"},
 		&cli.StringFlag{Name: "bootstrap-bucket", Required: true},
-		&cli.StringFlag{Name: "common-fate-account-id", Usage: "The AWS account where Common Fate is deployed"},
+		&cli.StringFlag{Name: "common-fate-aws-account", Usage: "The AWS account where Common Fate is deployed"},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler"},
-		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
 		bootstrapBucket := c.String("bootstrap-bucket")
 		handlerID := c.String("handler-id")
-		commonFateAWSAccountID := c.String("common-fate-account-id")
-		registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
+		commonFateAWSAccountID := c.String("common-fate-aws-account")
+		registry, err := registryclient.New(ctx)
 		if err != nil {
-			return errors.New("error configuring provider registry client")
+			return errors.Wrap(err, "configuring registry client")
 		}
 
-		provider, err := targetsvc.SplitProviderString(c.String("provider-id"))
+		providerString := c.String("provider-id")
+		provider, err := providerregistrysdk.ParseProvider(providerString)
 		if err != nil {
 			return err
 		}
 
 		// check that the provider type matches one in our registry
-		res, err := registryClient.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
+		res, err := registry.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
 		if err != nil {
 			return err
 		}
 
-		if res.JSON500 != nil {
-			return errors.New("unable to ping the registry client: " + res.JSON500.Error)
-		}
-
-		switch res.StatusCode() {
-		case http.StatusOK:
-			var stackname = c.String("handler-id")
-			if stackname == "" {
-				err = survey.AskOne(&survey.Input{Message: "enter the cloudformation stackname:", Default: handlerID}, &stackname)
-				if err != nil {
-					return err
-				}
-			}
-
-			var region = c.String("region")
-			if region == "" {
-				err = survey.AskOne(&survey.Input{Message: "enter the region of cloudformation stack deployment"}, &region)
-				if err != nil {
-					return err
-				}
-			}
-
-			values := make(map[string]string)
-
-			values["BootstrapBucketName"] = bootstrapBucket
-			values["HandlerID"] = handlerID
-			values["CommonFateAWSAccountID"] = commonFateAWSAccountID
-			lambdaAssetPath := path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version)
-			values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
-
-			awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
+		var stackname = c.String("handler-id")
+		if stackname == "" {
+			err = survey.AskOne(&survey.Input{Message: "enter the cloudformation stackname:", Default: handlerID}, &stackname)
 			if err != nil {
 				return err
 			}
+		}
 
-			config := res.JSON200.Schema.Config
-			if config != nil {
-				clio.Info("Enter the values for your configurations:")
-				for k, v := range *config {
-					if v.Secret != nil && *v.Secret {
-						client := ssm.NewFromConfig(awsCfg)
+		var region = c.String("region")
+		if region == "" {
+			err = survey.AskOne(&survey.Input{Message: "enter the region of cloudformation stack deployment"}, &region)
+			if err != nil {
+				return err
+			}
+		}
 
-						var secret string
-						name := SSMKey(SSMKeyOpts{
-							HandlerID:    handlerID,
-							Key:          k,
-							Publisher:    provider.Publisher,
-							ProviderName: provider.Name,
-						})
+		values := make(map[string]string)
 
-						helpMsg := fmt.Sprintf("This will be stored in AWS SSM Parameter Store with name '%s'", name)
-						err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
-						if err != nil {
-							return err
-						}
+		values["BootstrapBucketName"] = bootstrapBucket
+		values["HandlerID"] = handlerID
+		values["CommonFateAWSAccountID"] = commonFateAWSAccountID
+		lambdaAssetPath := path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version)
+		values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
 
-						_, err = client.PutParameter(ctx, &ssm.PutParameterInput{
-							Name:      aws.String(name),
-							Value:     aws.String(secret),
-							Type:      types.ParameterTypeSecureString,
-							Overwrite: aws.Bool(true),
-						})
-						if err != nil {
-							return err
-						}
+		awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
+		if err != nil {
+			return err
+		}
 
-						clio.Successf("Added to AWS SSM Parameter Store with name '%s'", name)
+		config := res.JSON200.Schema.Config
+		if config != nil {
+			clio.Info("Enter the values for your configurations:")
+			for k, v := range *config {
+				if v.Secret != nil && *v.Secret {
+					client := ssm.NewFromConfig(awsCfg)
 
-						// secret config should have "Secret" prefix to the config key name.
-						values[ConvertToPascalCase(k)+"Secret"] = name
+					var secret string
+					name := SSMKey(SSMKeyOpts{
+						HandlerID:    handlerID,
+						Key:          k,
+						Publisher:    provider.Publisher,
+						ProviderName: provider.Name,
+					})
 
-						continue
-					}
-
-					var v string
-					err = survey.AskOne(&survey.Input{Message: k + ":"}, &v)
+					helpMsg := fmt.Sprintf("This will be stored in AWS SSM Parameter Store with name '%s'", name)
+					err = survey.AskOne(&survey.Password{Message: k + ":", Help: helpMsg}, &secret)
 					if err != nil {
 						return err
 					}
-					values[ConvertToPascalCase(k)] = v
 
+					_, err = client.PutParameter(ctx, &ssm.PutParameterInput{
+						Name:      aws.String(name),
+						Value:     aws.String(secret),
+						Type:      types.ParameterTypeSecureString,
+						Overwrite: aws.Bool(true),
+					})
+					if err != nil {
+						return err
+					}
+
+					clio.Successf("Added to AWS SSM Parameter Store with name '%s'", name)
+
+					// secret config should have "Secret" prefix to the config key name.
+					values[ConvertToPascalCase(k)+"Secret"] = name
+
+					continue
 				}
-			}
 
-			if commonFateAWSAccountID == "" {
 				var v string
-				err = survey.AskOne(&survey.Input{Message: "The ID of the AWS account where Common Fate is deployed:"}, &v)
+				err = survey.AskOne(&survey.Input{Message: k + ":"}, &v)
 				if err != nil {
 					return err
 				}
-				values["CommonFateAWSAccountID"] = v
+				values[ConvertToPascalCase(k)] = v
+
 			}
-
-			parameterKeys := convertValuesToCloudformationParameter(values)
-
-			s3client := s3.NewFromConfig(awsCfg)
-			preSignedClient := s3.NewPresignClient(s3client)
-
-			presigner := Presigner{
-				PresignClient: preSignedClient,
-			}
-
-			req, err := presigner.GetObject(bootstrapBucket, path.Join(lambdaAssetPath, "cloudformation.json"), int64(time.Hour))
-			if err != nil {
-				return nil
-			}
-
-			templateUrl := fmt.Sprintf(" --template-url \"%s\" ", req.URL)
-			stackNameFlag := fmt.Sprintf(" --stack-name %s ", stackname)
-			regionFlag := fmt.Sprintf(" --region %s ", region)
-
-			output := strings.Join([]string{"aws cloudformation create-stack", stackNameFlag, regionFlag, templateUrl, parameterKeys, "--capabilities CAPABILITY_NAMED_IAM"}, "")
-
-			fmt.Printf("%v \n", output)
-
-		case http.StatusNotFound:
-			return errors.New(res.JSON404.Error)
-		case http.StatusInternalServerError:
-			return errors.New(res.JSON500.Error)
-		default:
-			return clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
 		}
+
+		if commonFateAWSAccountID == "" {
+			var v string
+			err = survey.AskOne(&survey.Input{Message: "The ID of the AWS account where Common Fate is deployed:"}, &v)
+			if err != nil {
+				return err
+			}
+			values["CommonFateAWSAccountID"] = v
+		}
+
+		parameterKeys := convertValuesToCloudformationParameter(values)
+
+		s3client := s3.NewFromConfig(awsCfg)
+		preSignedClient := s3.NewPresignClient(s3client)
+
+		presigner := Presigner{
+			PresignClient: preSignedClient,
+		}
+
+		req, err := presigner.GetObject(bootstrapBucket, path.Join(lambdaAssetPath, "cloudformation.json"), int64(time.Hour))
+		if err != nil {
+			return nil
+		}
+
+		templateUrl := fmt.Sprintf(" --template-url \"%s\" ", req.URL)
+		stackNameFlag := fmt.Sprintf(" --stack-name %s ", stackname)
+		regionFlag := fmt.Sprintf(" --region %s ", region)
+
+		output := strings.Join([]string{"aws cloudformation create-stack", stackNameFlag, regionFlag, templateUrl, parameterKeys, "--capabilities CAPABILITY_NAMED_IAM"}, "")
+
+		fmt.Printf("%v \n", output)
 
 		return nil
 	},
@@ -252,7 +237,6 @@ var UpdateStack = cli.Command{
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
 		&cli.StringFlag{Name: "provider-id", Usage: "Update the provider-id for the current stack"},
 		&cli.BoolFlag{Name: "use-previous-value", Usage: "use the previous stack values for the parameters"},
-		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
 		stackname := c.String("handler-id")
@@ -280,11 +264,9 @@ var UpdateStack = cli.Command{
 
 			// if the provider-id is provided then update the lambda-assets-handler path to the new version.
 			if c.String("provider-id") != "" {
-
-				// Check if the provided provider-id is present in the provider registry
-				registryClient, err := providerregistrysdk.NewClientWithResponses(c.String("registry-api-url"))
+				registry, err := registryclient.New(ctx)
 				if err != nil {
-					return errors.New("error configuring provider registry client")
+					return errors.Wrap(err, "configuring provider registry client")
 				}
 
 				provider, err := targetsvc.SplitProviderString(c.String("provider-id"))
@@ -292,22 +274,12 @@ var UpdateStack = cli.Command{
 					return err
 				}
 
-				res, err := registryClient.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
+				_, err = registry.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
 				if err != nil {
 					return err
 				}
 
-				switch res.StatusCode() {
-				case http.StatusOK:
-					values["AssetPath"] = path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version, "handler.zip")
-				case http.StatusNotFound:
-					return errors.New(res.JSON404.Error)
-				case http.StatusInternalServerError:
-					return errors.New(res.JSON500.Error)
-				default:
-					return clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
-				}
-
+				values["AssetPath"] = path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version, "handler.zip")
 			}
 
 			for _, parameter := range stack.Parameters {

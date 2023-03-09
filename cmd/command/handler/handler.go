@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"errors"
-
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio"
@@ -69,17 +67,13 @@ var RegisterCommand = cli.Command{
 			return err
 		}
 
-		result, err := cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
+		_, err = cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
 		if err != nil {
 			return err
 		}
 
-		switch result.StatusCode() {
-		case 201:
-			clio.Successf("Successfully registered handler '%s' with Common Fate", c.String("id"))
-			return nil
-		default:
-			return errors.New(string(result.Body))
-		}
+		clio.Successf("Successfully registered handler '%s' with Common Fate", c.String("id"))
+
+		return nil
 	},
 }

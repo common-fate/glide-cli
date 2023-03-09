@@ -2,9 +2,7 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"path"
 	"sort"
 	"strings"
@@ -19,8 +17,8 @@ import (
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/common-fate/cli/cmd/command"
 	"github.com/common-fate/cli/cmd/middleware"
-	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cloudform/deployer"
+	"github.com/pkg/errors"
 
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
@@ -39,11 +37,10 @@ var installCommand = cli.Command{
 	Description: "Quickstart command to install a provider",
 	Usage:       "Quickstart command to install a provider",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 		&cli.StringFlag{Name: "provider", Aliases: []string{"p"}, Usage: "The provider to deploy (for example, 'common-fate/aws@v0.4.0')"},
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and CloudFormation stack name to use (by convention, this is 'cf-handler-[provider publisher]-[provider name]')"},
 		&cli.StringFlag{Name: "target-group-id", Usage: "Override the ID of the Target Group which will be created"},
-		&cli.StringFlag{Name: "common-fate-account-id", Usage: "Override the Common Fate AWS Account ID (by default the current AWS account ID is used)"},
+		&cli.StringFlag{Name: "common-fate-aws-account", Usage: "Override the Common Fate AWS Account ID (by default the current AWS account ID is used)"},
 		&cli.StringFlag{Name: "target", Aliases: []string{"t"}, Usage: "The target kind to use with the provider (only required if the provider grants access to multiple kinds of targets)"},
 		&cli.BoolFlag{Name: "confirm-bootstrap", Usage: "Confirm creating a bootstrap bucket if it doesn't exist in the account and region you are deploying to"},
 		&cli.StringSliceFlag{Name: "config", Usage: "Provide config values for the provider in key=value format"},
@@ -63,9 +60,9 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		registry, err := registryclient.New(ctx, registryclient.WithAPIURL(c.String("registry-api-url")))
+		registry, err := registryclient.New(ctx)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "configuring provider registry client")
 		}
 
 		var provider *providerregistrysdk.ProviderDetail
@@ -122,9 +119,9 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		cfAccountID := c.String("common-fate-account-id")
+		cfAccountID := c.String("common-fate-aws-account")
 		if cfAccountID == "" {
-			clio.Warnf("using the current AWS account (%s) as the Common Fate account (use --common-fate-aws-account-id to override)", awsAccount)
+			clio.Warnf("using the current AWS account (%s) as the Common Fate account (use --common-fate-aws-account to override)", awsAccount)
 			cfAccountID = awsAccount
 		}
 
@@ -164,9 +161,8 @@ var installCommand = cli.Command{
 			}
 		}
 
-		// clio.Infof("You have selected to deploy: %s@%s and use the target Kind: %s", selectedProviderType, selectedProviderVersion, selectedProviderKind)
 		clio.Info("Copying provider assets from the registry to the bootstrap bucket...")
-		files, err := bs.CopyProviderFiles(ctx, *provider)
+		err = bs.CopyProviderFiles(ctx, *provider)
 		if err != nil {
 			return err
 		}
@@ -280,7 +276,7 @@ var installCommand = cli.Command{
 			targetgroupID = strings.TrimPrefix(handlerID, "cf-handler-")
 		}
 
-		oneLinerCommand := fmt.Sprintf("cf provider install --common-fate-account-id %s --handler-id %s --target-group-id %s --provider %s %s", cfAccountID, handlerID, targetgroupID, provider, strings.Join(oneLinerConfigArgs, " "))
+		oneLinerCommand := fmt.Sprintf("cf provider install --common-fate-aws-account %s --handler-id %s --target-group-id %s --provider %s %s", cfAccountID, handlerID, targetgroupID, provider, strings.Join(oneLinerConfigArgs, " "))
 
 		clio.NewLine()
 		clio.Infof("You can use the following one-liner command to redeploy this Provider in future:\n%s", oneLinerCommand)
@@ -290,8 +286,10 @@ var installCommand = cli.Command{
 
 		clio.Infof("Deploying CloudFormation stack for Handler '%s'", handlerID)
 
+		templateURL := bootstrapStackOutput.CloudFormationURL(provider.Base())
+
 		out, err := d.Deploy(ctx, deployer.DeployOpts{
-			Template:  files.CloudformationTemplateURL,
+			Template:  templateURL,
 			Params:    parameters,
 			StackName: handlerID,
 			Confirm:   true,
@@ -328,19 +326,14 @@ var installCommand = cli.Command{
 			Id:         handlerID,
 		}
 
-		rhr, err := cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
+		_, err = cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
 		if err != nil {
 			return err
 		}
 
-		switch rhr.StatusCode() {
-		case http.StatusCreated:
-			clio.Successf("Successfully registered Handler '%s' with Common Fate", handlerID)
-		default:
-			return errors.New(string(rhr.Body))
-		}
+		clio.Successf("Successfully registered Handler '%s' with Common Fate", handlerID)
 
-		tglr, err := cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
+		_, err = cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
 			DeploymentId: handlerID,
 			Priority:     100,
 			Kind:         selectedProviderKind,
@@ -349,12 +342,7 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		switch tglr.StatusCode() {
-		case http.StatusOK:
-			clio.Successf("Successfully linked Handler '%s' with Target Group '%s'", handlerID, targetgroupID)
-		default:
-			return errors.New(string(rhr.Body))
-		}
+		clio.Successf("Successfully linked Handler '%s' with Target Group '%s'", handlerID, targetgroupID)
 
 		clio.Info("Waiting for Handler to become healthy...")
 
@@ -368,7 +356,7 @@ var installCommand = cli.Command{
 				return err
 			}
 			if ghr.JSON200.Healthy {
-				clio.Success("Handler is healthy")
+				clio.Successf("Handler '%s' is healthy", handlerID)
 				return nil
 			}
 
@@ -402,7 +390,7 @@ func checkIfLambdaRoleExists(ctx context.Context, cfg aws.Config, handlerID stri
 	return true, nil
 }
 
-func promptForProvider(ctx context.Context, registryClient *providerregistrysdk.ClientWithResponses) (*providerregistrysdk.ProviderDetail, error) {
+func promptForProvider(ctx context.Context, registryClient *registryclient.Client) (*providerregistrysdk.ProviderDetail, error) {
 	// @TODO there should be an API which only returns the provider publisher and name combos
 	// maybe just publisher
 	// so the user can select by publisher -> name -> version
@@ -411,15 +399,8 @@ func promptForProvider(ctx context.Context, registryClient *providerregistrysdk.
 	if err != nil {
 		return nil, err
 	}
-	var allProviders []providerregistrysdk.ProviderDetail
-	switch res.StatusCode() {
-	case http.StatusOK:
-		allProviders = res.JSON200.Providers
-	case http.StatusInternalServerError:
-		return nil, errors.New(res.JSON500.Error)
-	default:
-		return nil, clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
-	}
+
+	allProviders := res.JSON200.Providers
 
 	var providers []string
 	providerMap := map[string][]providerregistrysdk.ProviderDetail{}

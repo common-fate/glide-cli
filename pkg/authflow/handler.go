@@ -95,18 +95,6 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-func (s *Server) oauthConfig() *oauth2.Config {
-	return &oauth2.Config{
-		RedirectURL: "http://localhost:18900/auth/cognito/callback",
-		ClientID:    s.exports.ClientID,
-		Scopes:      []string{"openid", "email"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  s.exports.AuthURL,
-			TokenURL: s.exports.TokenURL,
-		},
-	}
-}
-
 func (s *Server) oauthLogin(w http.ResponseWriter, r *http.Request) {
 	// Create oauthState cookie
 	oauthState := generateStateOauthCookie(w)
@@ -115,7 +103,7 @@ func (s *Server) oauthLogin(w http.ResponseWriter, r *http.Request) {
 		AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
 		validate that it matches the the state query parameter on your redirect callback.
 	*/
-	u := s.oauthConfig().AuthCodeURL(oauthState)
+	u := s.exports.OAuthConfig().AuthCodeURL(oauthState)
 
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
@@ -135,13 +123,19 @@ func (s *Server) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		s.response <- Response{Err: err}
 
-		w.Write([]byte("there was a problem logging in to Common Fate: " + err.Error()))
+		_, err = w.Write([]byte("there was a problem logging in to Common Fate: " + err.Error()))
+		if err != nil {
+			log.Printf("write error: %s", err.Error())
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
 	}
 
-	w.Write([]byte("logged in to Common Fate successfully! You can close this window."))
+	_, err = w.Write([]byte("logged in to Common Fate successfully! You can close this window."))
+	if err != nil {
+		log.Printf("write error: %s", err.Error())
+	}
 
 	s.response <- data
 }
@@ -150,7 +144,11 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	var expiration = time.Now().Add(20 * time.Minute)
 
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, err := rand.Read(b)
+	if err != nil {
+		// shouldn't happen
+		panic(err)
+	}
 	state := base64.URLEncoding.EncodeToString(b)
 	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
 	http.SetCookie(w, &cookie)
@@ -160,7 +158,7 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 
 func (s *Server) getUserData(code string) (Response, error) {
 	// Use code to get token and get user info.
-	cfg := s.oauthConfig()
+	cfg := s.exports.OAuthConfig()
 	clio.Debugw("exchanging oauth2 code", "oauth.config", cfg)
 
 	t, err := cfg.Exchange(context.Background(), code)
