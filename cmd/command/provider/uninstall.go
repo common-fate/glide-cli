@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/common-fate/cli/cmd/middleware"
-	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio"
@@ -21,7 +20,6 @@ var uninstallCommand = cli.Command{
 	Description: "Quickstart all-in-one command to remove a provider",
 	Usage:       "Quickstart all-in-one command to remove a provider",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID to remove", Required: true},
 		&cli.StringFlag{Name: "target-group-id", Usage: "Override the ID of the Target Group which will be deleted"},
 		&cli.BoolFlag{Name: "delete-cloudformation-stack", Usage: "Delete the CloudFormation stack for the Handler", Value: true},

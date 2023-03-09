@@ -20,7 +20,7 @@ require (
 	github.com/common-fate/clio v1.1.0
 	github.com/common-fate/cloudform v0.6.0
 	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230307173427-69fa64381342
-	github.com/common-fate/provider-registry-sdk-go v0.15.1
+	github.com/common-fate/provider-registry-sdk-go v0.16.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1

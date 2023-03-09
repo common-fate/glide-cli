@@ -2,9 +2,7 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"path"
 	"sort"
 	"strings"
@@ -19,8 +17,8 @@ import (
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/common-fate/cli/cmd/command"
 	"github.com/common-fate/cli/cmd/middleware"
-	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cloudform/deployer"
+	"github.com/pkg/errors"
 
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
@@ -39,7 +37,6 @@ var installCommand = cli.Command{
 	Description: "Quickstart command to install a provider",
 	Usage:       "Quickstart command to install a provider",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
 		&cli.StringFlag{Name: "provider", Aliases: []string{"p"}, Usage: "The provider to deploy (for example, 'common-fate/aws@v0.4.0')"},
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and CloudFormation stack name to use (by convention, this is 'cf-handler-[provider publisher]-[provider name]')"},
 		&cli.StringFlag{Name: "target-group-id", Usage: "Override the ID of the Target Group which will be created"},
@@ -63,9 +60,9 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		registry, err := registryclient.New(ctx, registryclient.WithAPIURL(c.String("registry-api-url")))
+		registry, err := registryclient.New(ctx)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "configuring provider registry client")
 		}
 
 		var provider *providerregistrysdk.ProviderDetail
@@ -328,19 +325,14 @@ var installCommand = cli.Command{
 			Id:         handlerID,
 		}
 
-		rhr, err := cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
+		_, err = cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
 		if err != nil {
 			return err
 		}
 
-		switch rhr.StatusCode() {
-		case http.StatusCreated:
-			clio.Successf("Successfully registered Handler '%s' with Common Fate", handlerID)
-		default:
-			return errors.New(string(rhr.Body))
-		}
+		clio.Successf("Successfully registered Handler '%s' with Common Fate", handlerID)
 
-		tglr, err := cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
+		_, err = cf.AdminCreateTargetGroupLinkWithResponse(ctx, targetgroupID, cftypes.AdminCreateTargetGroupLinkJSONRequestBody{
 			DeploymentId: handlerID,
 			Priority:     100,
 			Kind:         selectedProviderKind,
@@ -349,12 +341,7 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		switch tglr.StatusCode() {
-		case http.StatusOK:
-			clio.Successf("Successfully linked Handler '%s' with Target Group '%s'", handlerID, targetgroupID)
-		default:
-			return errors.New(string(rhr.Body))
-		}
+		clio.Successf("Successfully linked Handler '%s' with Target Group '%s'", handlerID, targetgroupID)
 
 		clio.Info("Waiting for Handler to become healthy...")
 
@@ -402,7 +389,7 @@ func checkIfLambdaRoleExists(ctx context.Context, cfg aws.Config, handlerID stri
 	return true, nil
 }
 
-func promptForProvider(ctx context.Context, registryClient *providerregistrysdk.ClientWithResponses) (*providerregistrysdk.ProviderDetail, error) {
+func promptForProvider(ctx context.Context, registryClient *registryclient.Client) (*providerregistrysdk.ProviderDetail, error) {
 	// @TODO there should be an API which only returns the provider publisher and name combos
 	// maybe just publisher
 	// so the user can select by publisher -> name -> version
@@ -411,15 +398,8 @@ func promptForProvider(ctx context.Context, registryClient *providerregistrysdk.
 	if err != nil {
 		return nil, err
 	}
-	var allProviders []providerregistrysdk.ProviderDetail
-	switch res.StatusCode() {
-	case http.StatusOK:
-		allProviders = res.JSON200.Providers
-	case http.StatusInternalServerError:
-		return nil, errors.New(res.JSON500.Error)
-	default:
-		return nil, clierr.New("Unhandled response from the Common Fate API", clierr.Infof("Status Code: %d", res.StatusCode()), clierr.Error(string(res.Body)))
-	}
+
+	allProviders := res.JSON200.Providers
 
 	var providers []string
 	providerMap := map[string][]providerregistrysdk.ProviderDetail{}
