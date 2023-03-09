@@ -144,7 +144,11 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	var expiration = time.Now().Add(20 * time.Minute)
 
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, err := rand.Read(b)
+	if err != nil {
+		// shouldn't happen
+		panic(err)
+	}
 	state := base64.URLEncoding.EncodeToString(b)
 	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
 	http.SetCookie(w, &cookie)
