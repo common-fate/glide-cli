@@ -1,8 +1,10 @@
 package provider
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/internal/build"
 	"github.com/common-fate/cli/pkg/client"
@@ -73,6 +75,19 @@ var uninstallCommand = cli.Command{
 		d := deployer.NewFromConfig(awsContext.Config)
 
 		if c.Bool("delete-cloudformation-stack") {
+
+			//check to see if cloudformation stack exists
+			client := cloudformation.NewFromConfig(awsContext.Config)
+			res, err := client.DescribeStacks(ctx, &cloudformation.DescribeStacksInput{
+				StackName: &handlerID,
+			})
+			if err != nil {
+				return err
+			}
+			if len(res.Stacks) == 0 {
+				return fmt.Errorf("could not find stack %s", handlerID)
+			}
+
 			clio.Infof("Deleting CloudFormation stack '%s'", handlerID)
 
 			_, err = d.Delete(ctx, deployer.DeleteOpts{
