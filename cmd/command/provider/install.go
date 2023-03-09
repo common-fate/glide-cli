@@ -290,7 +290,7 @@ var installCommand = cli.Command{
 
 		clio.Infof("Deploying CloudFormation stack for Handler '%s'", handlerID)
 
-		status, err := d.Deploy(ctx, deployer.DeployOpts{
+		out, err := d.Deploy(ctx, deployer.DeployOpts{
 			Template:  files.CloudformationTemplateURL,
 			Params:    parameters,
 			StackName: handlerID,
@@ -300,7 +300,13 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		clio.Infof("Deployment completed with status '%s'", status)
+		// if the output of cloudformation deploy is not 'CREATE_COMPLETE'
+		// then should return error
+		if out.FinalStatus != "CREATE_COMPLETE" {
+			return fmt.Errorf("failed to deploy CloudFormation stack for Handler '%s", handlerID)
+		}
+
+		clio.Infof("Deployment completed for HandlerID %s", handlerID)
 
 		clio.Infof("Creating a Target Group '%s' to route Access Requests to the Handler", targetgroupID)
 

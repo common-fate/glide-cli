@@ -19,7 +19,7 @@ var CreateCommand = cli.Command{
 	Usage:       "Create a target group",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "id", Required: true},
-		&cli.StringFlag{Name: "schema-from", Required: true, Usage: "publisher/name@version"},
+		&cli.StringFlag{Name: "schema-from", Required: true, Usage: "publisher/name@version/kind"},
 		&cli.BoolFlag{Name: "ok-if-exists", Value: false},
 	},
 	Action: func(c *cli.Context) error {
