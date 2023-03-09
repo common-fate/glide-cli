@@ -36,6 +36,7 @@ var BootstrapCommand = cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "registry-api-url", Value: build.ProviderRegistryAPIURL, Hidden: true},
+		&cli.BoolFlag{Name: "force", Usage: "force copy provider assets to bootstrap bucket"},
 	},
 
 	Action: func(c *cli.Context) error {
@@ -67,7 +68,7 @@ var BootstrapCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-		_, err = bs.CopyProviderFiles(ctx, *res.JSON200)
+		_, err = bs.CopyProviderFiles(ctx, *res.JSON200, bootstrapper.WithForceCopy(c.Bool("force")))
 		if err != nil {
 			return err
 		}
