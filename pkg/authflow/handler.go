@@ -123,7 +123,10 @@ func (s *Server) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		s.response <- Response{Err: err}
 
-		w.Write([]byte("there was a problem logging in to Common Fate: " + err.Error()))
+		_, err = w.Write([]byte("there was a problem logging in to Common Fate: " + err.Error()))
+		if err != nil {
+			log.Printf("write error: %s", err.Error())
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 
 		return
