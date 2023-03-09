@@ -147,7 +147,7 @@ var CreateStack = cli.Command{
 			lambdaAssetPath := path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version)
 			values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
 
-			awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
+			awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
 			if err != nil {
 				return err
 			}
@@ -260,7 +260,7 @@ var UpdateStack = cli.Command{
 
 		ctx := c.Context
 
-		awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
+		awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
 		if err != nil {
 			return err
 		}
