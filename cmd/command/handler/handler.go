@@ -73,5 +73,7 @@ var RegisterCommand = cli.Command{
 		}
 
 		clio.Successf("Successfully registered handler '%s' with Common Fate", c.String("id"))
+
+		return nil
 	},
 }
