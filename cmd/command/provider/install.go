@@ -40,7 +40,7 @@ var installCommand = cli.Command{
 		&cli.StringFlag{Name: "provider", Aliases: []string{"p"}, Usage: "The provider to deploy (for example, 'common-fate/aws@v0.4.0')"},
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and CloudFormation stack name to use (by convention, this is 'cf-handler-[provider publisher]-[provider name]')"},
 		&cli.StringFlag{Name: "target-group-id", Usage: "Override the ID of the Target Group which will be created"},
-		&cli.StringFlag{Name: "common-fate-account-id", Usage: "Override the Common Fate AWS Account ID (by default the current AWS account ID is used)"},
+		&cli.StringFlag{Name: "common-fate-aws-account", Usage: "Override the Common Fate AWS Account ID (by default the current AWS account ID is used)"},
 		&cli.StringFlag{Name: "target", Aliases: []string{"t"}, Usage: "The target kind to use with the provider (only required if the provider grants access to multiple kinds of targets)"},
 		&cli.BoolFlag{Name: "confirm-bootstrap", Usage: "Confirm creating a bootstrap bucket if it doesn't exist in the account and region you are deploying to"},
 		&cli.StringSliceFlag{Name: "config", Usage: "Provide config values for the provider in key=value format"},
@@ -119,9 +119,9 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		cfAccountID := c.String("common-fate-account-id")
+		cfAccountID := c.String("common-fate-aws-account")
 		if cfAccountID == "" {
-			clio.Warnf("using the current AWS account (%s) as the Common Fate account (use --common-fate-aws-account-id to override)", awsAccount)
+			clio.Warnf("using the current AWS account (%s) as the Common Fate account (use --common-fate-aws-account to override)", awsAccount)
 			cfAccountID = awsAccount
 		}
 
@@ -161,9 +161,8 @@ var installCommand = cli.Command{
 			}
 		}
 
-		// clio.Infof("You have selected to deploy: %s@%s and use the target Kind: %s", selectedProviderType, selectedProviderVersion, selectedProviderKind)
 		clio.Info("Copying provider assets from the registry to the bootstrap bucket...")
-		files, err := bs.CopyProviderFiles(ctx, *provider)
+		err = bs.CopyProviderFiles(ctx, *provider)
 		if err != nil {
 			return err
 		}
@@ -277,7 +276,7 @@ var installCommand = cli.Command{
 			targetgroupID = strings.TrimPrefix(handlerID, "cf-handler-")
 		}
 
-		oneLinerCommand := fmt.Sprintf("cf provider install --common-fate-account-id %s --handler-id %s --target-group-id %s --provider %s %s", cfAccountID, handlerID, targetgroupID, provider, strings.Join(oneLinerConfigArgs, " "))
+		oneLinerCommand := fmt.Sprintf("cf provider install --common-fate-aws-account %s --handler-id %s --target-group-id %s --provider %s %s", cfAccountID, handlerID, targetgroupID, provider, strings.Join(oneLinerConfigArgs, " "))
 
 		clio.NewLine()
 		clio.Infof("You can use the following one-liner command to redeploy this Provider in future:\n%s", oneLinerCommand)
@@ -287,8 +286,10 @@ var installCommand = cli.Command{
 
 		clio.Infof("Deploying CloudFormation stack for Handler '%s'", handlerID)
 
+		templateURL := bootstrapStackOutput.CloudFormationURL(provider.Base())
+
 		out, err := d.Deploy(ctx, deployer.DeployOpts{
-			Template:  files.CloudformationTemplateURL,
+			Template:  templateURL,
 			Params:    parameters,
 			StackName: handlerID,
 			Confirm:   true,
@@ -355,7 +356,7 @@ var installCommand = cli.Command{
 				return err
 			}
 			if ghr.JSON200.Healthy {
-				clio.Success("Handler is healthy")
+				clio.Successf("Handler '%s' is healthy", handlerID)
 				return nil
 			}
 

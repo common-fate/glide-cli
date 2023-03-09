@@ -7,6 +7,7 @@ import (
 	"github.com/common-fate/cli/cmd/command/bootstrap"
 	"github.com/common-fate/cli/cmd/command/config"
 	"github.com/common-fate/cli/cmd/command/handler"
+	"go.uber.org/zap"
 
 	"github.com/common-fate/cli/cmd/command/provider"
 	"github.com/common-fate/cli/cmd/command/rules"
@@ -49,6 +50,7 @@ func main() {
 		},
 	}
 	clio.SetLevelFromEnv("CF_LOG")
+	zap.ReplaceGlobals(clio.G())
 
 	err := app.Run(os.Args)
 	if err != nil {

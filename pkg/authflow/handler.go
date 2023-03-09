@@ -95,18 +95,6 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-func (s *Server) oauthConfig() *oauth2.Config {
-	return &oauth2.Config{
-		RedirectURL: "http://localhost:18900/auth/cognito/callback",
-		ClientID:    s.exports.ClientID,
-		Scopes:      []string{"openid", "email"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  s.exports.AuthURL,
-			TokenURL: s.exports.TokenURL,
-		},
-	}
-}
-
 func (s *Server) oauthLogin(w http.ResponseWriter, r *http.Request) {
 	// Create oauthState cookie
 	oauthState := generateStateOauthCookie(w)
@@ -115,7 +103,7 @@ func (s *Server) oauthLogin(w http.ResponseWriter, r *http.Request) {
 		AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
 		validate that it matches the the state query parameter on your redirect callback.
 	*/
-	u := s.oauthConfig().AuthCodeURL(oauthState)
+	u := s.exports.OAuthConfig().AuthCodeURL(oauthState)
 
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
@@ -160,7 +148,7 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 
 func (s *Server) getUserData(code string) (Response, error) {
 	// Use code to get token and get user info.
-	cfg := s.oauthConfig()
+	cfg := s.exports.OAuthConfig()
 	clio.Debugw("exchanging oauth2 code", "oauth.config", cfg)
 
 	t, err := cfg.Exchange(context.Background(), code)

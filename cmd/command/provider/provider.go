@@ -5,8 +5,8 @@ import (
 
 	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/clio"
-	"github.com/common-fate/common-fate/pkg/service/targetsvc"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
@@ -42,17 +42,20 @@ var BootstrapCommand = cli.Command{
 			return errors.Wrap(err, "configuring provider registry client")
 		}
 
-		provider, err := targetsvc.SplitProviderString(c.String("id"))
+		id := c.String("id")
+
+		provider, err := providerregistrysdk.ParseProvider(id)
 		if err != nil {
 			return err
 		}
+
 		//check that the provider type matches one in our registry
 		res, err := registry.GetProviderWithResponse(ctx, provider.Publisher, provider.Name, provider.Version)
 		if err != nil {
 			return err
 		}
 
-		clio.Success("Provider exists in the registry, beginning to clone assets.")
+		clio.Success("Provider exists in the registry")
 
 		awsContext, err := mw.AWSContextFromContext(ctx)
 		if err != nil {
@@ -63,7 +66,10 @@ var BootstrapCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-		_, err = bs.CopyProviderFiles(ctx, *res.JSON200, bootstrapper.WithForceCopy(c.Bool("force")))
+
+		clio.Info("Copying provider assets...")
+
+		err = bs.CopyProviderFiles(ctx, *res.JSON200, bootstrapper.WithForceCopy(c.Bool("force")))
 		if err != nil {
 			return err
 		}

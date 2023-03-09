@@ -106,7 +106,7 @@ func FromConfig(ctx context.Context, cfg *config.Config, opts ...func(co *Client
 
 	// if we have an API URL in the config file, use that rather than fetching it from the exports endpoint.
 	if depCtx.APIURL != "" {
-		return New(ctx, depCtx.APIURL, cfg.CurrentContext, opts...)
+		return New(ctx, depCtx.APIURL, cfg.CurrentContext, nil, opts...)
 	}
 
 	exp, err := depCtx.FetchExports(ctx) // fetch the aws-exports.json file containing the exported URLs
@@ -114,13 +114,13 @@ func FromConfig(ctx context.Context, cfg *config.Config, opts ...func(co *Client
 		return nil, err
 	}
 
-	return New(ctx, exp.APIURL, cfg.CurrentContext, opts...)
+	return New(ctx, exp.APIURL, cfg.CurrentContext, exp.OAuthConfig(), opts...)
 }
 
 // New creates a new client, specifying the URL and context directly.
 // The client loads the OAuth2.0 tokens from the system keychain.
 // The client automatically refreshes the access token if it is expired.
-func New(ctx context.Context, server, context string, opts ...func(co *ClientOpts)) (*types.ClientWithResponses, error) {
+func New(ctx context.Context, server, context string, oauthConfig *oauth2.Config, opts ...func(co *ClientOpts)) (*types.ClientWithResponses, error) {
 	co := &ClientOpts{
 		LoginHint: "cf login",
 	}
@@ -129,8 +129,30 @@ func New(ctx context.Context, server, context string, opts ...func(co *ClientOpt
 		o(co)
 	}
 
+	var src oauth2.TokenSource
+
 	ts := tokenstore.New(context, tokenstore.WithKeyring(co.Keyring))
-	oauthClient := oauth2.NewClient(ctx, &ts)
+	tok, err := ts.Token()
+	if err != nil {
+		return nil, clierr.New(fmt.Sprintf("%s.\nTo get started with Common Fate, please run: '%s'", err, co.LoginHint))
+	}
+
+	if oauthConfig != nil {
+		// if we have oauth config we can try and refresh the token automatically when it expires,
+		// and save it back in the keychain.
+		src = &tokenstore.NotifyRefreshTokenSource{
+			New:       oauthConfig.TokenSource(ctx, tok),
+			T:         tok,
+			SaveToken: ts.Save,
+		}
+	} else {
+		// otherwise, just use the local keychain token only. This is used in development use,
+		// where we override the API to a localhost URL and don't have the OAuth config on hand.
+		src = &ts
+	}
+
+	oauthClient := oauth2.NewClient(ctx, src)
+
 	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginHint: co.LoginHint}
 
 	return types.NewClientWithResponses(server, types.WithHTTPClient(httpClient))

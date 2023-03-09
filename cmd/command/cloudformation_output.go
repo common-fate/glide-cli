@@ -91,14 +91,14 @@ var CreateStack = cli.Command{
 		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The ID of the Handler (for example, 'cf-handler-aws')"},
 		&cli.StringFlag{Name: "bootstrap-bucket", Required: true},
-		&cli.StringFlag{Name: "common-fate-account-id", Usage: "The AWS account where Common Fate is deployed"},
+		&cli.StringFlag{Name: "common-fate-aws-account", Usage: "The AWS account where Common Fate is deployed"},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler"},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
 		bootstrapBucket := c.String("bootstrap-bucket")
 		handlerID := c.String("handler-id")
-		commonFateAWSAccountID := c.String("common-fate-account-id")
+		commonFateAWSAccountID := c.String("common-fate-aws-account")
 		registry, err := registryclient.New(ctx)
 		if err != nil {
 			return errors.Wrap(err, "configuring registry client")
