@@ -144,7 +144,7 @@ var CreateStack = cli.Command{
 			values["BootstrapBucketName"] = bootstrapBucket
 			values["HandlerID"] = handlerID
 			values["CommonFateAWSAccountID"] = commonFateAWSAccountID
-			lambdaAssetPath := path.Join(provider.Publisher, provider.Name, provider.Version)
+			lambdaAssetPath := path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version)
 			values["AssetPath"] = path.Join(lambdaAssetPath, "handler.zip")
 
 			awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
@@ -299,7 +299,7 @@ var UpdateStack = cli.Command{
 
 				switch res.StatusCode() {
 				case http.StatusOK:
-					values["AssetPath"] = path.Join(provider.Publisher, provider.Name, provider.Version, "handler.zip")
+					values["AssetPath"] = path.Join("registry.commonfate.io", "v1alpha1", "providers", provider.Publisher, provider.Name, provider.Version, "handler.zip")
 				case http.StatusNotFound:
 					return errors.New(res.JSON404.Error)
 				case http.StatusInternalServerError:

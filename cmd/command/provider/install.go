@@ -166,7 +166,7 @@ var installCommand = cli.Command{
 
 		// clio.Infof("You have selected to deploy: %s@%s and use the target Kind: %s", selectedProviderType, selectedProviderVersion, selectedProviderKind)
 		clio.Info("Copying provider assets from the registry to the bootstrap bucket...")
-		files, err := bs.CopyProviderFiles(ctx, *provider, false)
+		files, err := bs.CopyProviderFiles(ctx, *provider)
 		if err != nil {
 			return err
 		}
