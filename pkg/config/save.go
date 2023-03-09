@@ -24,7 +24,10 @@ func Save(cfg *Config) error {
 
 	_, err = os.Stat(configFolder)
 	if os.IsNotExist(err) {
-		os.MkdirAll(configFolder, os.ModePerm)
+		err := os.MkdirAll(configFolder, os.ModePerm)
+		if err != nil {
+			return err
+		}
 	}
 	fp := filepath.Join(configFolder, "config")
 	return saveConfigFile(cfg, fp)

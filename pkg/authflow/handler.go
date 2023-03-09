@@ -129,7 +129,10 @@ func (s *Server) oauthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("logged in to Common Fate successfully! You can close this window."))
+	_, err = w.Write([]byte("logged in to Common Fate successfully! You can close this window."))
+	if err != nil {
+		log.Printf("write error: %s", err.Error())
+	}
 
 	s.response <- data
 }
