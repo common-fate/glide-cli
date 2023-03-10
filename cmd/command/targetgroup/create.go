@@ -30,7 +30,7 @@ var CreateCommand = cli.Command{
 
 		id := c.String("id")
 		if id == "" {
-			err := survey.AskOne(&survey.Input{Message: "Enter an ID for the target group"}, &id)
+			err := survey.AskOne(&survey.Input{Message: "Enter an ID for the Target Group"}, &id)
 			if err != nil {
 				return err
 			}
