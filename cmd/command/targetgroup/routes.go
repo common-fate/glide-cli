@@ -7,7 +7,8 @@ import (
 
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
-	"github.com/olekukonko/tablewriter"
+	"github.com/common-fate/cli/pkg/prompt"
+	"github.com/common-fate/cli/pkg/table"
 	"github.com/urfave/cli/v2"
 )
 
@@ -26,7 +27,7 @@ var ListRoutesCommand = cli.Command{
 	Description: "List target group routes",
 	Usage:       "List target group routes",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
+		&cli.StringFlag{Name: "target-group-id"},
 	},
 	Action: cli.ActionFunc(func(c *cli.Context) error {
 		ctx := c.Context
@@ -41,30 +42,24 @@ var ListRoutesCommand = cli.Command{
 			return err
 		}
 
-		res, err := cf.AdminListTargetRoutesWithResponse(ctx, c.String("id"))
+		tgID := c.String("target-group-id")
+		if tgID == "" {
+			tg, err := prompt.TargetGroup(ctx, cf)
+			if err != nil {
+				return err
+			}
+			tgID = tg.Id
+		}
+
+		res, err := cf.AdminListTargetRoutesWithResponse(ctx, tgID)
 		if err != nil {
 			return err
 		}
-
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Target Group Id", "Handler Id", "Kind", "Priority", "Valid", "Diagnostics"})
-		table.SetAutoWrapText(false)
-		table.SetAutoFormatHeaders(true)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetRowSeparator("")
-		table.SetHeaderLine(false)
-		table.SetBorder(false)
-
-		for _, d := range res.JSON200.Routes {
-			table.Append([]string{
-				d.TargetGroupId, d.HandlerId, d.Kind, strconv.Itoa(d.Priority), strconv.FormatBool(d.Valid), fmt.Sprintf("%v", d.Diagnostics),
-			})
+		tbl := table.New(os.Stderr)
+		tbl.Columns("Target Group", "Handler", "Kind", "Priority", "Valid", "Diagnostics")
+		for _, route := range res.JSON200.Routes {
+			tbl.Row(route.TargetGroupId, route.HandlerId, route.Kind, strconv.Itoa(route.Priority), strconv.FormatBool(route.Valid), fmt.Sprintf("%v", route.Diagnostics))
 		}
-		table.Render()
-
-		return nil
+		return tbl.Flush()
 	}),
 }

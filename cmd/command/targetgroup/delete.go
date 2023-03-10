@@ -3,6 +3,7 @@ package targetgroup
 import (
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
 	"github.com/urfave/cli/v2"
 )
@@ -12,7 +13,7 @@ var DeleteCommand = cli.Command{
 	Description: "Delete a target group",
 	Usage:       "Delete a target group",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
+		&cli.StringFlag{Name: "id"},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
@@ -21,13 +22,18 @@ var DeleteCommand = cli.Command{
 			return err
 		}
 
-		id := c.String("id")
-
 		cf, err := client.FromConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}
-
+		id := c.String("id")
+		if id == "" {
+			tg, err := prompt.TargetGroup(ctx, cf)
+			if err != nil {
+				return err
+			}
+			id = tg.Id
+		}
 		_, err = cf.AdminDeleteTargetGroupWithResponse(ctx, id)
 		if err != nil {
 			return err

@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
 	"github.com/urfave/cli/v2"
 )
@@ -12,7 +13,7 @@ var DeleteCommand = cli.Command{
 	Description: "Delete handlers",
 	Usage:       "Delete handlers",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
+		&cli.StringFlag{Name: "id"},
 	},
 	Action: cli.ActionFunc(func(c *cli.Context) error {
 		ctx := c.Context
@@ -25,7 +26,15 @@ var DeleteCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-		_, err = cf.AdminDeleteHandlerWithResponse(ctx, c.String("id"))
+		id := c.String("id")
+		if id == "" {
+			h, err := prompt.Handler(ctx, cf)
+			if err != nil {
+				return err
+			}
+			id = h.Id
+		}
+		_, err = cf.AdminDeleteHandlerWithResponse(ctx, id)
 		if err != nil {
 			return err
 		}

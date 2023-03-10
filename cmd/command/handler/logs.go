@@ -6,6 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/aws"
 
+	"github.com/common-fate/cli/pkg/client"
+	"github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/cfaws"
 	"github.com/urfave/cli/v2"
@@ -25,7 +28,7 @@ var WatchCommand = cli.Command{
 	Name:        "watch",
 	Description: "Stream logs for a handler",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
+		&cli.StringFlag{Name: "id"},
 	},
 	Action: func(c *cli.Context) error {
 
@@ -34,10 +37,25 @@ var WatchCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-
+		id := c.String("id")
+		if id == "" {
+			cfg, err := config.Load()
+			if err != nil {
+				return err
+			}
+			cf, err := client.FromConfig(ctx, cfg)
+			if err != nil {
+				return err
+			}
+			h, err := prompt.Handler(ctx, cf)
+			if err != nil {
+				return err
+			}
+			id = h.Id
+		}
 		// logGroup for handlers uses the id of the handler as its name
 		// this is defined in the cloudformation template
-		logGroup := "/aws/lambda/" + c.String("id")
+		logGroup := "/aws/lambda/" + id
 		clio.Infof("Starting to watch logs for log group id: %s", logGroup)
 		watchEvents(logGroup, cfg.Region, c.String("filter"))
 		return nil
@@ -63,7 +81,7 @@ var GetCommand = cli.Command{
 	Name:        "get",
 	Description: "Get logs for a handler",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
+		&cli.StringFlag{Name: "id"},
 		&cli.StringFlag{Name: "start", Usage: "Start time", Value: "-5m", Required: false},
 		&cli.StringFlag{Name: "end", Usage: "End time", Value: "now", Required: false},
 	},
@@ -74,8 +92,23 @@ var GetCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-
-		logGroup := "/aws/lambda/" + c.String("id")
+		id := c.String("id")
+		if id == "" {
+			cfg, err := config.Load()
+			if err != nil {
+				return err
+			}
+			cf, err := client.FromConfig(ctx, cfg)
+			if err != nil {
+				return err
+			}
+			h, err := prompt.Handler(ctx, cf)
+			if err != nil {
+				return err
+			}
+			id = h.Id
+		}
+		logGroup := "/aws/lambda/" + id
 		start := c.String("start")
 		end := c.String("end")
 		clio.Info("Starting to get logs for Health check lambda, log group id: %s", logGroup)

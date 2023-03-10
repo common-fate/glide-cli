@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"os"
+
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio"
@@ -22,39 +25,47 @@ var Command = cli.Command{
 	},
 }
 
-/*
-
-
-```bash
-# register the deployment with Common Fate
-> cfcli deployment register --runtime=aws-lambda --id=okta-1 --aws-region=us-east-1 --aws-account=123456789012
-[✔] registered deployment 'okta-1' with Common Fate
-```
-
-to exec this same command with go run, you can do:
-go run cf/cmd/cli/main.go deployment register --runtime=aws-lambda --id=okta-1 --aws-region=us-east-1 --aws-account=123456789012
-
-*/
-
 var RegisterCommand = cli.Command{
 	Name:        "register",
 	Description: "Register a handler in Common Fate",
 	Usage:       "Register a handler in Common Fate",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
-		&cli.StringFlag{Name: "runtime", Required: true, Value: "aws-lambda"},
-		&cli.StringFlag{Name: "aws-region", Required: true},
-		&cli.StringFlag{Name: "aws-account", Required: true},
+		&cli.StringFlag{Name: "id"},
+		&cli.StringFlag{Name: "runtime", Value: "aws-lambda"},
+		&cli.StringFlag{Name: "aws-region"},
+		&cli.StringFlag{Name: "aws-account"},
 	},
 	Action: func(c *cli.Context) error {
 
 		ctx := c.Context
 
-		reqBody := types.AdminRegisterHandlerJSONRequestBody{
-			AwsAccount: c.String("aws-account"),
-			AwsRegion:  c.String("aws-region"),
-			Runtime:    c.String("runtime"),
-			Id:         c.String("id"),
+		var handlerID = c.String("id")
+		if handlerID == "" {
+			err := survey.AskOne(&survey.Input{Message: "Enter the hander ID (this should be the cloudfromation stack name)"}, &handlerID)
+			if err != nil {
+				return err
+			}
+		}
+		var runtime = c.String("runtime")
+		if runtime == "" {
+			err := survey.AskOne(&survey.Input{Message: "Enter the runtime", Default: "aws-lambda"}, &runtime)
+			if err != nil {
+				return err
+			}
+		}
+		var awsRegion = c.String("aws-region")
+		if awsRegion == "" {
+			err := survey.AskOne(&survey.Input{Message: "Enter the AWS Region that the handler is deployed in", Default: os.Getenv("AWS_REGION")}, &awsRegion)
+			if err != nil {
+				return err
+			}
+		}
+		var awsAccount = c.String("aws-account")
+		if awsAccount == "" {
+			err := survey.AskOne(&survey.Input{Message: "Enter the AWS Account ID that your handler is deployed in:"}, &awsAccount)
+			if err != nil {
+				return err
+			}
 		}
 
 		cfg, err := config.Load()
@@ -67,12 +78,17 @@ var RegisterCommand = cli.Command{
 			return err
 		}
 
-		_, err = cf.AdminRegisterHandlerWithResponse(ctx, reqBody)
+		_, err = cf.AdminRegisterHandlerWithResponse(ctx, types.AdminRegisterHandlerJSONRequestBody{
+			AwsAccount: awsAccount,
+			AwsRegion:  awsRegion,
+			Runtime:    runtime,
+			Id:         handlerID,
+		})
 		if err != nil {
 			return err
 		}
 
-		clio.Successf("Successfully registered handler '%s' with Common Fate", c.String("id"))
+		clio.Successf("Successfully registered handler '%s' with Common Fate", handlerID)
 
 		return nil
 	},

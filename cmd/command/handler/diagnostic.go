@@ -1,21 +1,24 @@
 package handler
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
-	"github.com/olekukonko/tablewriter"
+	"github.com/common-fate/cli/pkg/prompt"
+	"github.com/common-fate/cli/pkg/table"
+	"github.com/common-fate/clio"
+	"github.com/common-fate/common-fate/pkg/types"
 	"github.com/urfave/cli/v2"
 )
 
 var DiagnosticCommand = cli.Command{
-	Name:        "diagnostic",
+	Name:        "diagnostics",
+	Aliases:     []string{"diagnostic"},
 	Description: "List diagnostic logs for a handler",
 	Usage:       "List diagnostic logs for a handler",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
+		&cli.StringFlag{Name: "id"},
 	},
 	Action: cli.ActionFunc(func(c *cli.Context) error {
 		ctx := c.Context
@@ -24,43 +27,46 @@ var DiagnosticCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-
 		cf, err := client.FromConfig(ctx, cfg)
 		if err != nil {
 			return err
 		}
-		res, err := cf.AdminGetHandlerWithResponse(ctx, id)
-		if err != nil {
-			return err
+		var handler types.TGHandler
+		if id == "" {
+			h, err := prompt.Handler(ctx, cf)
+			if err != nil {
+				return err
+			}
+			handler = *h
+		} else {
+			res, err := cf.AdminGetHandlerWithResponse(ctx, id)
+			if err != nil {
+				return err
+			}
+			handler = *res.JSON200
 		}
 
 		health := "healthy"
-		if !res.JSON200.Healthy {
+		if !handler.Healthy {
 			health = "unhealthy"
 		}
-		fmt.Println("Diagnostic Logs:")
-		fmt.Printf("%s %s %s %s\n", res.JSON200.Id, res.JSON200.AwsAccount, res.JSON200.AwsRegion, health)
 
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{
-			"Level", "Message"})
-		table.SetAutoWrapText(false)
-		table.SetAutoFormatHeaders(true)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetRowSeparator("")
-		table.SetHeaderLine(false)
-		table.SetBorder(false)
+		tbl := table.New(os.Stderr)
+		clio.Log("Handler")
+		tbl.Columns("ID", "Account", "Region", "Health")
+		tbl.Row(handler.Id, handler.AwsAccount, handler.AwsRegion, health)
 
-		for _, d := range res.JSON200.Diagnostics {
-			table.Append([]string{
-				d.Message,
-			})
+		err = tbl.Flush()
+		if err != nil {
+			return err
 		}
-		table.Render()
+		clio.NewLine()
+		clio.Log("Diagnostics")
+		tbl.Columns("Level", "Message")
+		for _, d := range handler.Diagnostics {
+			tbl.Row(string(d.Level), d.Message)
+		}
 
-		return nil
+		return tbl.Flush()
 	}),
 }
