@@ -66,7 +66,7 @@ var LinkCommand = cli.Command{
 			return err
 		}
 
-		clio.Successf("Successfully linked the handler '%s' with target group '%s' using kind: '%s'", c.String("handler"), c.String("target-group"), c.String("kind"))
+		clio.Successf("Successfully linked the handler '%s' with target group '%s' using kind: '%s'", hID, tgID, c.String("kind"))
 
 		return nil
 	},
