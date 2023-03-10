@@ -2,13 +2,14 @@ package provider
 
 import (
 	"os"
+	"strings"
 
 	mw "github.com/common-fate/cli/cmd/middleware"
+	"github.com/common-fate/cli/pkg/table"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
-	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
@@ -98,31 +99,17 @@ var ListCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"id", "name", "publisher", "version"})
-		table.SetAutoWrapText(false)
-		table.SetAutoFormatHeaders(true)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetRowSeparator("")
-		table.SetHeaderLine(false)
-		table.SetBorder(true)
-
-		if res.JSON200 != nil {
-			for _, d := range res.JSON200.Providers {
-
-				table.Append([]string{
-					getProviderId(d.Publisher, d.Name, d.Version), d.Name, d.Publisher, d.Version,
-				})
+		tbl := table.New(os.Stderr)
+		tbl.Columns("ID", "Name", "Publisher", "Version", "Kinds")
+		for _, d := range res.JSON200.Providers {
+			var kinds []string
+			if d.Schema.Targets != nil {
+				for kind := range *d.Schema.Targets {
+					kinds = append(kinds, kind)
+				}
 			}
+			tbl.Row(getProviderId(d.Publisher, d.Name, d.Version), d.Name, d.Publisher, d.Version, strings.Join(kinds, ", "))
 		}
-
-		table.Render()
-
-		return nil
-
+		return tbl.Flush()
 	},
 }

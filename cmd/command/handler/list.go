@@ -5,7 +5,7 @@ import (
 
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
-	"github.com/olekukonko/tablewriter"
+	"github.com/common-fate/cli/pkg/table"
 	"github.com/urfave/cli/v2"
 )
 
@@ -30,29 +30,15 @@ var ListCommand = cli.Command{
 			return err
 		}
 
-		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"ID", "Account", "Region", "Health"})
-		table.SetAutoWrapText(false)
-		table.SetAutoFormatHeaders(true)
-		table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-		table.SetAlignment(tablewriter.ALIGN_LEFT)
-		table.SetCenterSeparator("")
-		table.SetColumnSeparator("")
-		table.SetRowSeparator("")
-		table.SetHeaderLine(false)
-		table.SetBorder(false)
-
+		tbl := table.New(os.Stderr)
+		tbl.Columns("ID", "Account", "Region", "Health")
 		for _, d := range res.JSON200.Res {
 			health := "healthy"
 			if !d.Healthy {
 				health = "unhealthy"
 			}
-			table.Append([]string{
-				d.Id, d.AwsAccount, d.AwsRegion, health,
-			})
+			tbl.Row(d.Id, d.AwsAccount, d.AwsRegion, health)
 		}
-		table.Render()
-
-		return nil
+		return tbl.Flush()
 	}),
 }

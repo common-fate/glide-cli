@@ -3,6 +3,7 @@ package targetgroup
 import (
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/types"
 	"github.com/urfave/cli/v2"
@@ -10,11 +11,12 @@ import (
 
 var UnlinkCommand = cli.Command{
 	Name:        "unlink",
-	Description: "Unlink a deployment from a target group",
-	Usage:       "Unlink a deployment from a target group",
+	Description: "Unlink a handler from a target group",
+	Usage:       "Unlink a handler from a target group",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "deployment", Required: true},
-		&cli.StringFlag{Name: "target-group", Required: true},
+		&cli.StringFlag{Name: "handler-id"},
+		&cli.StringFlag{Name: "target-group-id"},
+		&cli.StringFlag{Name: "kind", Required: true},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
@@ -28,14 +30,32 @@ var UnlinkCommand = cli.Command{
 			return err
 		}
 
-		_, err = cf.AdminRemoveTargetGroupLinkWithResponse(ctx, c.String("target-group"), &types.AdminRemoveTargetGroupLinkParams{
-			DeploymentId: c.String("deployment"),
+		tgID := c.String("target-group-id")
+		if tgID == "" {
+			tg, err := prompt.TargetGroup(ctx, cf)
+			if err != nil {
+				return err
+			}
+			tgID = tg.Id
+		}
+		hID := c.String("handler-id")
+		if hID == "" {
+			h, err := prompt.Handler(ctx, cf)
+			if err != nil {
+				return err
+			}
+			hID = h.Id
+		}
+
+		_, err = cf.AdminRemoveTargetGroupLinkWithResponse(ctx, tgID, &types.AdminRemoveTargetGroupLinkParams{
+			DeploymentId: hID,
+			Kind:         c.String("kind"),
 		})
 		if err != nil {
 			return err
 		}
 
-		clio.Successf("Unlinked deployment %s from group %s", c.String("deployment"), c.String("target-group"))
+		clio.Successf("Unlinked handler %s from target group %s", hID, tgID)
 
 		return nil
 	},
