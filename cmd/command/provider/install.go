@@ -22,8 +22,8 @@ import (
 
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
-	"github.com/common-fate/clio/clierr"
 	cftypes "github.com/common-fate/common-fate/pkg/types"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
@@ -126,7 +126,7 @@ var installCommand = cli.Command{
 		}
 
 		if provider == nil {
-			provider, err = promptForProvider(ctx, registry)
+			provider, err = prompt.Provider(ctx, registry)
 			if err != nil {
 				return err
 			}
@@ -137,28 +137,9 @@ var installCommand = cli.Command{
 			return err
 		}
 
-		var kinds []string
-		for kind := range *provider.Schema.Targets {
-			kinds = append(kinds, kind)
-		}
-
-		var selectedProviderKind string
-
-		if len(kinds) == 0 {
-			return clierr.New("This Provider doesn't grant access to anything. This is a problem with the Provider and should be reported to the Provider developers.")
-		}
-
-		if len(kinds) == 1 {
-			selectedProviderKind = kinds[0]
-			clio.Infof("This Provider will grant access to %s targets", selectedProviderKind)
-		}
-
-		if len(kinds) > 1 {
-			p := &survey.Select{Message: "Select which Kind of target to use with this provider", Options: kinds, Default: kinds[0]} // sets the latest version as the default
-			err = survey.AskOne(p, &selectedProviderKind)
-			if err != nil {
-				return err
-			}
+		selectedProviderKind, err := prompt.Kind(*provider)
+		if err != nil {
+			return err
 		}
 
 		clio.Info("Copying provider assets from the registry to the bootstrap bucket...")
@@ -388,58 +369,6 @@ func checkIfLambdaRoleExists(ctx context.Context, cfg aws.Config, handlerID stri
 
 	// if we get here, the role exists because the API call succeeded.
 	return true, nil
-}
-
-func promptForProvider(ctx context.Context, registryClient *registryclient.Client) (*providerregistrysdk.ProviderDetail, error) {
-	// @TODO there should be an API which only returns the provider publisher and name combos
-	// maybe just publisher
-	// so the user can select by publisher -> name -> version
-	//check that the provider type matches one in our registry
-	res, err := registryClient.ListAllProvidersWithResponse(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	allProviders := res.JSON200.Providers
-
-	var providers []string
-	providerMap := map[string][]providerregistrysdk.ProviderDetail{}
-
-	for _, provider := range allProviders {
-		key := provider.Publisher + "/" + provider.Name
-		providerMap[key] = append(providerMap[key], provider)
-	}
-	for k, v := range providerMap {
-		providers = append(providers, k)
-		// sort versions from newest to oldest
-		sort.Slice(v, func(i, j int) bool {
-			return v[i].Version > v[j].Version
-		})
-	}
-
-	var selectedProviderType string
-	p := &survey.Select{Message: "The Provider to deploy", Options: providers}
-	err = survey.AskOne(p, &selectedProviderType)
-	if err != nil {
-		return nil, err
-	}
-
-	var versions []string
-	versionMap := map[string]providerregistrysdk.ProviderDetail{}
-	for _, version := range providerMap[selectedProviderType] {
-		versions = append(versions, version.Version)
-		versionMap[version.Version] = version
-	}
-
-	var selectedProviderVersion string
-	p = &survey.Select{Message: "The version of the Provider to deploy", Options: versions, Default: versions[0]} // sets the latest version as the default
-	err = survey.AskOne(p, &selectedProviderVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	providerDetail := versionMap[selectedProviderVersion]
-	return &providerDetail, nil
 }
 
 type promptForConfigOpts struct {

@@ -1,15 +1,18 @@
 package targetgroup
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/common-fate/cli/pkg/client"
 	"github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -18,15 +21,38 @@ var CreateCommand = cli.Command{
 	Description: "Create a target group",
 	Usage:       "Create a target group",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "id", Required: true},
-		&cli.StringFlag{Name: "schema-from", Required: true, Usage: "publisher/name@version/kind"},
+		&cli.StringFlag{Name: "id"},
+		&cli.StringFlag{Name: "schema-from", Usage: "publisher/name@version/kind"},
 		&cli.BoolFlag{Name: "ok-if-exists", Value: false},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
-		id := c.String("id")
-		schemaFrom := c.String("schema-from")
 
+		id := c.String("id")
+		if id == "" {
+			err := survey.AskOne(&survey.Input{Message: "Enter an ID for the target group"}, &id)
+			if err != nil {
+				return err
+			}
+		}
+
+		schemaFrom := c.String("schema-from")
+		if schemaFrom == "" {
+			registry, err := registryclient.New(ctx)
+			if err != nil {
+				return errors.Wrap(err, "configuring provider registry client")
+			}
+			provider, err := prompt.Provider(ctx, registry)
+			if err != nil {
+				return err
+			}
+			kind, err := prompt.Kind(*provider)
+			if err != nil {
+				return err
+			}
+			schemaFrom = provider.String() + "/" + kind
+			clio.Infof("Using schema from %s", schemaFrom)
+		}
 		cfg, err := config.Load()
 		if err != nil {
 			return err
