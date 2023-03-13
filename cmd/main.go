@@ -46,7 +46,6 @@ func main() {
 			&targetgroup.Command,
 			&handler.Command,
 			mw.WithBeforeFuncs(&bootstrap.Command, mw.RequireAWSCredentials()),
-			mw.WithBeforeFuncs(&command.GenerateCfOutput, mw.RequireAWSCredentials()),
 		},
 	}
 	clio.SetLevelFromEnv("CF_LOG")

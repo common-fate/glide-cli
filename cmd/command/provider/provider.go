@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/common-fate/cli/cmd/command/provider/generate"
 	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/pkg/table"
 	"github.com/common-fate/clio"
@@ -21,8 +22,9 @@ var Command = cli.Command{
 	Subcommands: []*cli.Command{
 		mw.WithBeforeFuncs(&BootstrapCommand, mw.RequireAWSCredentials()),
 		&ListCommand,
-		mw.WithBeforeFuncs(&installCommand, mw.RequireAWSCredentials()),
-		mw.WithBeforeFuncs(&uninstallCommand, mw.RequireAWSCredentials()),
+		&generate.Command,
+		mw.WithBeforeFuncs(&deployCommand, mw.RequireAWSCredentials()),
+		mw.WithBeforeFuncs(&destroyCommand, mw.RequireAWSCredentials()),
 	},
 }
 
