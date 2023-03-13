@@ -290,8 +290,13 @@ var installCommand = cli.Command{
 		clio.Infof("Creating a Target Group '%s' to route Access Requests to the Handler", targetgroupID)
 
 		_, err = cf.AdminCreateTargetGroupWithResponse(ctx, cftypes.AdminCreateTargetGroupJSONRequestBody{
-			Id:           targetgroupID,
-			TargetSchema: provider.Publisher + "/" + provider.Name + "@" + provider.Version + "/" + selectedProviderKind,
+			Id: targetgroupID,
+			From: cftypes.TargetGroupFrom{
+				Kind:      selectedProviderKind,
+				Name:      provider.Name,
+				Publisher: provider.Publisher,
+				Version:   provider.Version,
+			},
 		})
 		if err != nil {
 			return err

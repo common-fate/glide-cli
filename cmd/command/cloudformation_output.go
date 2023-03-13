@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/common-fate/clio"
-	"github.com/common-fate/common-fate/pkg/service/targetsvc"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/pkg/errors"
@@ -262,14 +261,16 @@ var UpdateStack = cli.Command{
 			stack := out.Stacks[0]
 			values := make(map[string]string)
 
+			providerID := c.String("provider-id")
+
 			// if the provider-id is provided then update the lambda-assets-handler path to the new version.
-			if c.String("provider-id") != "" {
+			if providerID != "" {
 				registry, err := registryclient.New(ctx)
 				if err != nil {
 					return errors.Wrap(err, "configuring provider registry client")
 				}
 
-				provider, err := targetsvc.SplitProviderString(c.String("provider-id"))
+				provider, err := providerregistrysdk.ParseProvider(providerID)
 				if err != nil {
 					return err
 				}

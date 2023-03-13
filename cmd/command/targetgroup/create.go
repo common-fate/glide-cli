@@ -11,6 +11,7 @@ import (
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
+	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -22,7 +23,8 @@ var CreateCommand = cli.Command{
 	Usage:       "Create a target group",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "id"},
-		&cli.StringFlag{Name: "schema-from", Usage: "publisher/name@version/kind"},
+		&cli.StringFlag{Name: "kind", Usage: "the target kind that the provider grants access to"},
+		&cli.StringFlag{Name: "provider", Usage: "publisher/name@version"},
 		&cli.BoolFlag{Name: "ok-if-exists", Value: false},
 	},
 	Action: func(c *cli.Context) error {
@@ -36,23 +38,43 @@ var CreateCommand = cli.Command{
 			}
 		}
 
-		schemaFrom := c.String("schema-from")
-		if schemaFrom == "" {
-			registry, err := registryclient.New(ctx)
-			if err != nil {
-				return errors.Wrap(err, "configuring provider registry client")
-			}
-			provider, err := prompt.Provider(ctx, registry)
-			if err != nil {
-				return err
-			}
-			kind, err := prompt.Kind(*provider)
-			if err != nil {
-				return err
-			}
-			schemaFrom = provider.String() + "/" + kind
-			clio.Infof("Using schema from %s", schemaFrom)
+		registry, err := registryclient.New(ctx)
+		if err != nil {
+			return errors.Wrap(err, "configuring provider registry client")
 		}
+
+		var provider *providerregistrysdk.ProviderDetail
+
+		providerInput := c.String("provider")
+		if providerInput != "" {
+			p, err := providerregistrysdk.ParseProvider(providerInput)
+			if err != nil {
+				return err
+			}
+
+			res, err := registry.GetProviderWithResponse(ctx, p.Publisher, p.Name, p.Version)
+			if err != nil {
+				return err
+			}
+
+			provider = res.JSON200
+		} else {
+			provider, err = prompt.Provider(ctx, registry)
+			if err != nil {
+				return err
+			}
+		}
+
+		kind := c.String("kind")
+		if kind == "" {
+			kind, err = prompt.Kind(*provider)
+			if err != nil {
+				return err
+			}
+		}
+
+		clio.Infof("Using schema from %s, kind %s", provider, kind)
+
 		cfg, err := config.Load()
 		if err != nil {
 			return err
@@ -64,8 +86,13 @@ var CreateCommand = cli.Command{
 		}
 
 		res, err := cf.AdminCreateTargetGroupWithResponse(ctx, types.AdminCreateTargetGroupJSONRequestBody{
-			Id:           id,
-			TargetSchema: schemaFrom,
+			Id: id,
+			From: types.TargetGroupFrom{
+				Kind:      kind,
+				Name:      provider.Name,
+				Publisher: provider.Publisher,
+				Version:   provider.Version,
+			},
 		})
 		if err != nil {
 			return err

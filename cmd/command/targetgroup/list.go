@@ -1,6 +1,7 @@
 package targetgroup
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/common-fate/cli/pkg/client"
@@ -32,8 +33,9 @@ var ListCommand = cli.Command{
 		}
 		tbl := table.New(os.Stderr)
 		tbl.Columns("ID", "Target Schema")
-		for _, targetGroup := range res.JSON200.TargetGroups {
-			tbl.Row(targetGroup.Id, targetGroup.TargetSchema.From)
+		for _, tg := range res.JSON200.TargetGroups {
+			from := fmt.Sprintf("%s/%s@%s/%s", tg.From.Publisher, tg.From.Name, tg.From.Version, tg.From.Kind)
+			tbl.Row(tg.Id, from)
 		}
 		return tbl.Flush()
 
