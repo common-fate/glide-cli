@@ -115,7 +115,7 @@ var destroyCommand = cli.Command{
 
 		clio.Successf("Handler '%s' has been removed", handlerID)
 		if desc != nil {
-			clio.Infof("You can deploy this handler again by running:\ncf provider install -p %s --handler-id %s", desc.Provider, handlerID)
+			clio.Infof("You can deploy this handler again by running:\ncf provider deploy -p %s --handler-id %s", desc.Provider, handlerID)
 		}
 
 		return nil
