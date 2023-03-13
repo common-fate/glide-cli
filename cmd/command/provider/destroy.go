@@ -15,10 +15,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var uninstallCommand = cli.Command{
-	Name:        "uninstall",
-	Description: "Quickstart all-in-one command to remove a provider",
-	Usage:       "Quickstart all-in-one command to remove a provider",
+var destroyCommand = cli.Command{
+	Name:        "destroy",
+	Description: "Quickstart all-in-one command to destroy a provider deployment",
+	Usage:       "Quickstart all-in-one command to destroy a provider deployment",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID to remove", Required: true},
 		&cli.StringFlag{Name: "target-group-id", Usage: "Override the ID of the Target Group which will be deleted"},

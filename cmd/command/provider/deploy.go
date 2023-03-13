@@ -15,14 +15,15 @@ import (
 	iamTypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	ssmTypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
-	"github.com/common-fate/cli/cmd/command"
 	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cloudform/deployer"
 	"github.com/pkg/errors"
 
 	"github.com/common-fate/cli/pkg/client"
 	cfconfig "github.com/common-fate/cli/pkg/config"
+	"github.com/common-fate/cli/pkg/fmtconvert"
 	"github.com/common-fate/cli/pkg/prompt"
+	"github.com/common-fate/cli/pkg/ssmkey"
 	"github.com/common-fate/clio"
 	cftypes "github.com/common-fate/common-fate/pkg/types"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
@@ -32,10 +33,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var installCommand = cli.Command{
-	Name:        "install",
-	Description: "Quickstart command to install a provider",
-	Usage:       "Quickstart command to install a provider",
+var deployCommand = cli.Command{
+	Name:        "deploy",
+	Description: "Quickstart command to deploy a provider",
+	Usage:       "Quickstart command to deploy a provider",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "provider", Aliases: []string{"p"}, Usage: "The provider to deploy (for example, 'common-fate/aws@v0.4.0')"},
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and CloudFormation stack name to use (by convention, this is 'cf-handler-[provider publisher]-[provider name]')"},
@@ -193,7 +194,7 @@ var installCommand = cli.Command{
 			for _, k := range keys {
 				v := (*config)[k]
 
-				paramName := command.ConvertToPascalCase(k)
+				paramName := fmtconvert.PascalCase(k)
 
 				var isSecret bool
 				if v.Secret != nil && *v.Secret {
@@ -404,7 +405,7 @@ func promptForConfig(ctx context.Context, opts promptForConfigOpts) (string, err
 	client := ssm.NewFromConfig(opts.AWSCfg)
 
 	var secret string
-	ssmKey := command.SSMKey(command.SSMKeyOpts{
+	ssmKey := ssmkey.SSMKey(ssmkey.SSMKeyOpts{
 		HandlerID:    opts.HandlerID,
 		Key:          opts.Key,
 		Publisher:    opts.Provider.Publisher,

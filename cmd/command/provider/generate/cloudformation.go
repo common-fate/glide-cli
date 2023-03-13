@@ -1,4 +1,4 @@
-package command
+package generate
 
 import (
 	"context"
@@ -17,6 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/aws/aws-sdk-go/aws"
 
+	"github.com/common-fate/cli/pkg/fmtconvert"
+	"github.com/common-fate/cli/pkg/ssmkey"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
@@ -45,34 +47,6 @@ func (presigner Presigner) GetObject(
 	return request, err
 }
 
-var GenerateCfOutput = cli.Command{
-	Name:  "cloudformation",
-	Usage: "Manage CloudFormation templates for Providers",
-	Subcommands: []*cli.Command{
-		&cfnCommandCommand,
-	},
-}
-
-var cfnCommandCommand = cli.Command{
-	Name:  "command",
-	Usage: "Generate AWS CLI commands to create or update CloudFormation stacks",
-	Subcommands: []*cli.Command{
-		&UpdateStack,
-		&CreateStack,
-	},
-}
-
-func ConvertToPascalCase(s string) string {
-	arg := strings.Split(s, "_")
-	var formattedStr []string
-
-	for _, v := range arg {
-		formattedStr = append(formattedStr, strings.ToUpper(v[0:1])+v[1:])
-	}
-
-	return strings.Join(formattedStr, "")
-}
-
 func convertValuesToCloudformationParameter(m map[string]string) string {
 	parameters := "--parameters "
 
@@ -83,9 +57,10 @@ func convertValuesToCloudformationParameter(m map[string]string) string {
 	return parameters
 }
 
-var CreateStack = cli.Command{
-	Name:  "create",
-	Usage: "Generate an 'aws cloudformation create-stack' command",
+var cloudFormationCreate = cli.Command{
+	Name:    "cloudformation-create",
+	Aliases: []string{"cfn-create"},
+	Usage:   "Generate an 'aws cloudformation create-stack' command",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "provider-id", Required: true, Usage: "publisher/name@version"},
 		&cli.StringFlag{Name: "handler-id", Required: true, Usage: "The ID of the Handler (for example, 'cf-handler-aws')"},
@@ -152,7 +127,7 @@ var CreateStack = cli.Command{
 					client := ssm.NewFromConfig(awsCfg)
 
 					var secret string
-					name := SSMKey(SSMKeyOpts{
+					name := ssmkey.SSMKey(ssmkey.SSMKeyOpts{
 						HandlerID:    handlerID,
 						Key:          k,
 						Publisher:    provider.Publisher,
@@ -178,7 +153,7 @@ var CreateStack = cli.Command{
 					clio.Successf("Added to AWS SSM Parameter Store with name '%s'", name)
 
 					// secret config should have "Secret" prefix to the config key name.
-					values[ConvertToPascalCase(k)+"Secret"] = name
+					values[fmtconvert.PascalCase(k)+"Secret"] = name
 
 					continue
 				}
@@ -188,7 +163,7 @@ var CreateStack = cli.Command{
 				if err != nil {
 					return err
 				}
-				values[ConvertToPascalCase(k)] = v
+				values[fmtconvert.PascalCase(k)] = v
 
 			}
 		}
@@ -228,9 +203,10 @@ var CreateStack = cli.Command{
 	},
 }
 
-var UpdateStack = cli.Command{
-	Name:  "update",
-	Usage: "Generate an 'aws cloudformation update-stack' command",
+var cloudformationUpdate = cli.Command{
+	Name:    "cloudformation-update",
+	Aliases: []string{"cfn-update"},
+	Usage:   "Generate an 'aws cloudformation update-stack' command",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "handler-id", Usage: "The Handler ID and name of the CloudFormation stack", Required: true},
 		&cli.StringFlag{Name: "region", Usage: "The region to deploy the handler", Required: true},
@@ -374,19 +350,6 @@ var UpdateStack = cli.Command{
 
 		return nil
 	},
-}
-
-type SSMKeyOpts struct {
-	HandlerID    string
-	Key          string
-	Publisher    string
-	ProviderName string
-}
-
-// this will create a unique identifier for AWS System Manager Parameter Store
-// for configuration field "api_url" this will result: 'publisher/provider-name/version/configuration/api_url'
-func SSMKey(opts SSMKeyOpts) string {
-	return "/" + path.Join("common-fate", "provider", opts.Publisher, opts.ProviderName, opts.HandlerID, opts.Key)
 }
 
 // utility function to check if the string belongs to the slice.
