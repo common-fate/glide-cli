@@ -258,7 +258,7 @@ var deployCommand = cli.Command{
 			targetgroupID = strings.TrimPrefix(handlerID, "cf-handler-")
 		}
 
-		oneLinerCommand := fmt.Sprintf("cf provider install --common-fate-aws-account %s --handler-id %s --target-group-id %s --provider %s %s", cfAccountID, handlerID, targetgroupID, provider, strings.Join(oneLinerConfigArgs, " "))
+		oneLinerCommand := fmt.Sprintf("cf provider deploy --common-fate-aws-account %s --handler-id %s --target-group-id %s --provider %s %s", cfAccountID, handlerID, targetgroupID, provider, strings.Join(oneLinerConfigArgs, " "))
 
 		clio.NewLine()
 		clio.Infof("You can use the following one-liner command to redeploy this Provider in future:\n%s", oneLinerCommand)
