@@ -44,6 +44,7 @@ func main() {
 			&rules.Command,
 			&provider.Command,
 			&targetgroup.Command,
+			&command.Get,
 			&handler.Command,
 			mw.WithBeforeFuncs(&bootstrap.Command, mw.RequireAWSCredentials()),
 		},
