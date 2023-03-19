@@ -90,6 +90,9 @@ var ListCommand = cli.Command{
 	Aliases:     []string{"ls"},
 	Description: "List providers",
 	Usage:       "List providers",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{Name: "with-dev", Usage: "Include all dev providers as well", Hidden: true},
+	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
 		registry, err := registryclient.New(ctx)
@@ -97,7 +100,11 @@ var ListCommand = cli.Command{
 			return errors.Wrap(err, "configuring provider registry client")
 		}
 
-		res, err := registry.ListAllProvidersWithResponse(ctx)
+		shouldIncludeDevProviders := c.Bool("with-dev")
+
+		res, err := registry.ListAllProvidersWithResponse(ctx, &providerregistrysdk.ListAllProvidersParams{
+			WithDev: &shouldIncludeDevProviders,
+		})
 		if err != nil {
 			return err
 		}

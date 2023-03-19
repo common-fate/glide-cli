@@ -89,7 +89,7 @@ func Provider(ctx context.Context, registryClient *registryclient.Client) (*prov
 	// maybe just publisher
 	// so the user can select by publisher -> name -> version
 	//check that the provider type matches one in our registry
-	res, err := registryClient.ListAllProvidersWithResponse(ctx)
+	res, err := registryClient.ListAllProvidersWithResponse(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
