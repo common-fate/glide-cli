@@ -26,6 +26,7 @@ var CreateCommand = cli.Command{
 		&cli.StringFlag{Name: "kind", Usage: "the target kind that the provider grants access to"},
 		&cli.StringFlag{Name: "provider", Usage: "publisher/name@version"},
 		&cli.BoolFlag{Name: "ok-if-exists", Value: false},
+		&cli.BoolFlag{Name: "with-dev", Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
@@ -59,7 +60,7 @@ var CreateCommand = cli.Command{
 
 			provider = res.JSON200
 		} else {
-			provider, err = prompt.Provider(ctx, registry)
+			provider, err = prompt.Provider(ctx, registry, c.Bool("with-dev"))
 			if err != nil {
 				return err
 			}

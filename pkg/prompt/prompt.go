@@ -84,12 +84,14 @@ func Kind(provider providerregistrysdk.ProviderDetail) (string, error) {
 	}
 	return selectedProviderKind, nil
 }
-func Provider(ctx context.Context, registryClient *registryclient.Client) (*providerregistrysdk.ProviderDetail, error) {
+func Provider(ctx context.Context, registryClient *registryclient.Client, shouldShowHiddenProviders bool) (*providerregistrysdk.ProviderDetail, error) {
 	// @TODO there should be an API which only returns the provider publisher and name combos
 	// maybe just publisher
 	// so the user can select by publisher -> name -> version
 	//check that the provider type matches one in our registry
-	res, err := registryClient.ListAllProvidersWithResponse(ctx, nil)
+	res, err := registryClient.ListAllProvidersWithResponse(ctx, &providerregistrysdk.ListAllProvidersParams{
+		WithDev: &shouldShowHiddenProviders,
+	})
 	if err != nil {
 		return nil, err
 	}

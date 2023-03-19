@@ -45,6 +45,7 @@ var deployCommand = cli.Command{
 		&cli.StringFlag{Name: "target", Aliases: []string{"t"}, Usage: "The target kind to use with the provider (only required if the provider grants access to multiple kinds of targets)"},
 		&cli.BoolFlag{Name: "confirm-bootstrap", Usage: "Confirm creating a bootstrap bucket if it doesn't exist in the account and region you are deploying to"},
 		&cli.StringSliceFlag{Name: "config", Usage: "Provide config values for the provider in key=value format"},
+		&cli.BoolFlag{Name: "with-dev", Usage: "Will list down providers including hidden dev providers", Hidden: true},
 	},
 	Action: func(c *cli.Context) error {
 		ctx := c.Context
@@ -127,7 +128,7 @@ var deployCommand = cli.Command{
 		}
 
 		if provider == nil {
-			provider, err = prompt.Provider(ctx, registry)
+			provider, err = prompt.Provider(ctx, registry, c.Bool("with-dev"))
 			if err != nil {
 				return err
 			}
