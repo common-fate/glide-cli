@@ -30,6 +30,7 @@ func StoreNewToken(t *oauth2.Token) error {
 func (s *NotifyRefreshTokenSource) Token() (*oauth2.Token, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	zap.S().Debugf("existing token expiry: %s", s.T.Expiry)
 	if s.T.Valid() {
 		zap.S().Debug("returning cached in-memory token")
 		return s.T, nil
