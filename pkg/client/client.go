@@ -151,9 +151,13 @@ func New(ctx context.Context, server, context string, oauthConfig *oauth2.Config
 		src = &ts
 	}
 
-	oauthClient := oauth2.NewClient(ctx, src)
+	oauthClient := http.Client{
+		Transport: &oauth2.Transport{
+			Source: src,
+		},
+	}
 
-	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginHint: co.LoginHint}
+	httpClient := &ErrorHandlingClient{Client: &oauthClient, LoginHint: co.LoginHint}
 
 	return types.NewClientWithResponses(server, types.WithHTTPClient(httpClient))
 }
