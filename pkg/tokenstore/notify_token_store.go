@@ -35,10 +35,13 @@ func (s *NotifyRefreshTokenSource) Token() (*oauth2.Token, error) {
 		zap.S().Debug("returning cached in-memory token")
 		return s.T, nil
 	}
+	zap.S().Debugf("refreshing token")
 	t, err := s.New.Token()
 	if err != nil {
 		return nil, err
 	}
 	s.T = t
+
+	zap.S().Debugf("saving token")
 	return t, s.SaveToken(t)
 }
