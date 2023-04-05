@@ -114,6 +114,11 @@ func (s *cfKeyring) openKeyring() (keyring.Keyring, error) {
 		name = "commonfate"
 	}
 
+	dirname := os.Getenv("COMMONFATE_KEYRING_FILE_DIR")
+	if dirname == "" {
+		dirname = "~/.commonfate"
+	}
+
 	keychainName := os.Getenv("COMMONFATE_KEYRING_MACOS_KEYCHAIN_NAME")
 	if keychainName == "" {
 		keychainName = "login"
@@ -140,7 +145,7 @@ func (s *cfKeyring) openKeyring() (keyring.Keyring, error) {
 		PassPrefix: name,
 
 		// Fallback encrypted file
-		FileDir:          os.Getenv("COMMONFATE_KEYRING_FILE_DIR"),
+		FileDir:          dirname,
 		FilePasswordFunc: keyring.TerminalPrompt,
 	}
 
