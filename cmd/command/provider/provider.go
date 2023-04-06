@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/common-fate/cli/cmd/command/provider/generate"
 	mw "github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/cli/pkg/table"
@@ -97,7 +98,9 @@ var ListCommand = cli.Command{
 			return errors.Wrap(err, "configuring provider registry client")
 		}
 
-		res, err := registry.ListAllProvidersWithResponse(ctx)
+		res, err := registry.ListAllProvidersWithResponse(ctx, &providerregistrysdk.ListAllProvidersParams{
+			WithDev: aws.Bool(false),
+		})
 		if err != nil {
 			return err
 		}
