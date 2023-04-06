@@ -20,7 +20,7 @@ require (
 	github.com/common-fate/clio v1.1.0
 	github.com/common-fate/cloudform v0.6.0
 	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230313123710-ce52f67312c9
-	github.com/common-fate/provider-registry-sdk-go v0.17.5-0.20230406031035-a287420040f2
+	github.com/common-fate/provider-registry-sdk-go v0.17.5-0.20230406043912-bdb70373e272
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
 	github.com/sethvargo/go-retry v0.2.4
