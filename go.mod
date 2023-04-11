@@ -8,19 +8,19 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/TylerBrock/saw v0.2.2
 	github.com/aws/aws-sdk-go v1.44.71
-	github.com/aws/aws-sdk-go-v2 v1.17.5
-	github.com/aws/aws-sdk-go-v2/config v1.18.15
+	github.com/aws/aws-sdk-go-v2 v1.17.7
+	github.com/aws/aws-sdk-go-v2/config v1.18.19
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.22.2
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.15.10
 	github.com/aws/aws-sdk-go-v2/service/iam v1.18.13
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.31.1
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.28.0
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7
 	github.com/aws/smithy-go v1.13.5
 	github.com/common-fate/clio v1.1.0
 	github.com/common-fate/cloudform v0.6.0
 	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230313123710-ce52f67312c9
-	github.com/common-fate/provider-registry-sdk-go v0.16.1
+	github.com/common-fate/provider-registry-sdk-go v0.17.5
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
 	github.com/sethvargo/go-retry v0.2.4
@@ -32,20 +32,20 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2 // indirect
 	github.com/aws-cloudformation/rain v1.2.0 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.3 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.15 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.29 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.30 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.10 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.10 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.18 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.1 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.25 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.23 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.25 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.14.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.30.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.12.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.6 // indirect
 	github.com/briandowns/spinner v1.23.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/common-fate/apikit v0.2.1-0.20220526131641-1d860b34f6ed // indirect
@@ -66,6 +66,8 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/labstack/echo/v4 v4.9.1 // indirect
+	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -73,9 +75,14 @@ require (
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
@@ -89,7 +90,9 @@ func Provider(ctx context.Context, registryClient *registryclient.Client) (*prov
 	// maybe just publisher
 	// so the user can select by publisher -> name -> version
 	//check that the provider type matches one in our registry
-	res, err := registryClient.ListAllProvidersWithResponse(ctx)
+	res, err := registryClient.ListAllProvidersWithResponse(ctx, &providerregistrysdk.ListAllProvidersParams{
+		WithDev: aws.Bool(false),
+	})
 	if err != nil {
 		return nil, err
 	}
