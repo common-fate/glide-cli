@@ -13,7 +13,7 @@ import (
 	mw "github.com/common-fate/cli/cmd/middleware"
 )
 
-var Command = cli.Command{
+var OSSSubCommand = cli.Command{
 	Name:  "oss",
 	Usage: "Actions for PDK providers",
 	Subcommands: []*cli.Command{
