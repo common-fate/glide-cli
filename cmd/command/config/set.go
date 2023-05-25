@@ -14,7 +14,7 @@ var set = cli.Command{
 	Usage: "set a config variable in ~/.commonfate/config",
 	Action: func(c *cli.Context) error {
 		if c.Args().Len() != 2 {
-			return clierr.New("usage: cf config set [key] [value]")
+			return clierr.New("usage: cf oss config set [key] [value]")
 		}
 
 		key := c.Args().Get(0)

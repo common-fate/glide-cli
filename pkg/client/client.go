@@ -122,7 +122,7 @@ func FromConfig(ctx context.Context, cfg *config.Config, opts ...func(co *Client
 // The client automatically refreshes the access token if it is expired.
 func New(ctx context.Context, server, context string, oauthConfig *oauth2.Config, opts ...func(co *ClientOpts)) (*types.ClientWithResponses, error) {
 	co := &ClientOpts{
-		LoginHint: "cf login",
+		LoginHint: "cf oss login",
 	}
 
 	for _, o := range opts {
