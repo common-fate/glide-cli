@@ -3,6 +3,7 @@ package tokenstore
 import (
 	"sync"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
@@ -39,6 +40,19 @@ func (s *NotifyRefreshTokenSource) Token() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	IDToken, ok := t.Extra("id_token").(string)
+	if !ok {
+		return nil, errors.New("could not find id_token in authentication response")
+	}
+
+	zap.S().Debug("set ID token as access token")
+
+	// currently, our Cognito REST API authentication uses the ID Token rather than the Access Token.
+	// for simplicity, we override the returned access token with the ID token,
+	// as the oauth2 package appends the access token automatically to outgoing requests.
+	t.AccessToken = IDToken
+
 	s.T = t
 	return t, s.SaveToken(t)
 }
