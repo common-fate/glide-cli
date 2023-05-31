@@ -3,6 +3,7 @@ package tokenstore
 import (
 	"sync"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
@@ -31,13 +32,27 @@ func (s *NotifyRefreshTokenSource) Token() (*oauth2.Token, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.T.Valid() {
-		zap.S().Debug("returning cached in-memory token")
+		zap.S().Debugw("returning cached oauth2 in-memory token", "expiry", s.T.Expiry)
 		return s.T, nil
 	}
+	zap.S().Debug("refreshing oauth2 token", "expiry", s.T.Expiry)
 	t, err := s.New.Token()
 	if err != nil {
 		return nil, err
 	}
+
+	IDToken, ok := t.Extra("id_token").(string)
+	if !ok {
+		return nil, errors.New("could not find id_token in authentication response")
+	}
+
+	zap.S().Debug("set ID token as access token")
+
+	// currently, our Cognito REST API authentication uses the ID Token rather than the Access Token.
+	// for simplicity, we override the returned access token with the ID token,
+	// as the oauth2 package appends the access token automatically to outgoing requests.
+	t.AccessToken = IDToken
+
 	s.T = t
 	return t, s.SaveToken(t)
 }
