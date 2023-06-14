@@ -5,7 +5,6 @@ import (
 
 	"github.com/common-fate/awsconfigfile"
 	"github.com/common-fate/cli/pkg/client"
-	"github.com/common-fate/clio"
 )
 
 // Source reads available AWS SSO profiles from the Common Fate API.
@@ -19,8 +18,6 @@ type Source struct {
 
 func (s Source) GetProfiles(ctx context.Context) ([]awsconfigfile.SSOProfile, error) {
 	cf := s.Client
-
-	clio.Infof("listing available profiles from Common Fate (%s)", s.DashboardURL)
 
 	rules, err := cf.UserListAccessRulesWithResponse(ctx)
 	if err != nil {
