@@ -31,11 +31,21 @@ func StoreNewToken(t *oauth2.Token) error {
 func (s *NotifyRefreshTokenSource) Token() (*oauth2.Token, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.T.AccessToken == "" {
+		zap.S().Debugw("Access token is empty")
+	} else {
+		zap.S().Debugw("Access token is not empty")
+	}
+	if s.T.RefreshToken == "" {
+		zap.S().Debugw("Refresh token is empty")
+	} else {
+		zap.S().Debugw("Refresh token is not empty")
+	}
 	if s.T.Valid() {
-		zap.S().Debugw("returning cached oauth2 in-memory token", "expiry", s.T.Expiry)
+		zap.S().Debugw("returning cached oauth2 in-memory token", "expiry", s.T.Expiry.String())
 		return s.T, nil
 	}
-	zap.S().Debug("refreshing oauth2 token", "expiry", s.T.Expiry)
+	zap.S().Debugw("refreshing oauth2 token", "expiry", s.T.Expiry.String())
 	t, err := s.New.Token()
 	if err != nil {
 		return nil, err
