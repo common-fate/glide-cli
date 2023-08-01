@@ -2,6 +2,7 @@ package command
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/99designs/keyring"
 	"github.com/AlecAivazis/survey/v2"
@@ -55,6 +56,26 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	}
 
 	ctx := c.Context
+
+	//check expire for current token if it exists
+	ts := tokenstore.New(cfg.CurrentContext)
+
+	token, err := ts.Token()
+	if err != nil && err != tokenstore.ErrNotFound {
+		return err
+
+	}
+
+	//what do we consider to be 'close to expiry' for now ill set it at 5 minutes?
+	now := time.Now()
+	timeDifference := (time.Minute * 5)
+	//maybe we add a flag here to gate this as well
+	if token.Expiry.Unix()-now.Unix() > int64(timeDifference) {
+		//not within the range where we want to re-login
+		clio.Infow("Auth token still valid, skipping login flow.")
+
+		return nil
+	}
 
 	authResponse := make(chan authflow.Response)
 
