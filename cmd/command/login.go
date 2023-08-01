@@ -67,14 +67,16 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	}
 
 	//what do we consider to be 'close to expiry' for now ill set it at 5 minutes?
-	now := time.Now()
-	timeDifference := (time.Minute * 5)
-	//maybe we add a flag here to gate this as well
-	if token.Expiry.Unix()-now.Unix() > int64(timeDifference) {
-		//not within the range where we want to re-login
-		clio.Infow("Auth token still valid, skipping login flow.")
+	if token != nil {
+		now := time.Now()
+		timeDifference := (time.Minute * 5)
+		//maybe we add a flag here to gate this as well
+		if token.Expiry.Unix()-now.Unix() > int64(timeDifference) {
+			//not within the range where we want to re-login
+			clio.Infow("Auth token still valid, skipping login flow.")
 
-		return nil
+			return nil
+		}
 	}
 
 	authResponse := make(chan authflow.Response)
