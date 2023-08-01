@@ -43,6 +43,7 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	}
 
 	if url == "" {
+
 		prompt := &survey.Input{
 			Message: "Your Common Fate dashboard URL",
 			Default: cfg.CurrentOrEmpty().DashboardURL,

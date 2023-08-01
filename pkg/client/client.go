@@ -31,10 +31,21 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 		req.Header.Add("User-Agent", ua)
 	}
 
+	//before prompting try suggesting the saved url in config
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+	cfContext := cfg.CurrentOrEmpty()
+
 	res, err := rd.Client.Do(req)
 	var ne *url.Error
 	if errors.As(err, &ne) && ne.Err == tokenstore.ErrNotFound {
+		if cfContext.DashboardURL != "" {
+			return nil, clierr.New(fmt.Sprintf("%s.\nTo get started with Common Fate, please run: '%s %s'", err, rd.LoginHint, cfContext.DashboardURL))
+		}
 		return nil, clierr.New(fmt.Sprintf("%s.\nTo get started with Common Fate, please run: '%s'", err, rd.LoginHint))
+
 	}
 	if err != nil {
 		return nil, err
