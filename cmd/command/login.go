@@ -16,8 +16,11 @@ import (
 )
 
 var Login = cli.Command{
-	Name:   "login",
-	Usage:  "Log in to Common Fate",
+	Name:  "login",
+	Usage: "Log in to Common Fate",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{Name: "lazy", Usage: "the lazy flag lets granted decide whether a new login flow should be initiated based on the token expiry"},
+	},
 	Action: defaultLoginFlow.LoginAction,
 }
 
@@ -58,7 +61,7 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	ctx := c.Context
 
 	//check expire for current token if it exists
-	ts := tokenstore.New(cfg.CurrentContext)
+	ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(lf.Keyring))
 
 	token, err := ts.Token()
 	if err != nil && err != tokenstore.ErrNotFound {
@@ -67,11 +70,13 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	}
 
 	//what do we consider to be 'close to expiry' for now ill set it at 5 minutes?
-	if token != nil {
+	if token != nil && c.Bool("lazy") {
+		expiry := token.Expiry
 		now := time.Now()
-		timeDifference := (time.Minute * 5)
+		timeDifference := expiry.Unix() - now.Unix()
+		targetTime := int64((time.Minute * 5).Seconds())
 		//maybe we add a flag here to gate this as well
-		if token.Expiry.Unix()-now.Unix() > int64(timeDifference) {
+		if timeDifference > targetTime {
 			//not within the range where we want to re-login
 			clio.Infow("Auth token still valid, skipping login flow.")
 
