@@ -51,6 +51,7 @@ require (
 	github.com/common-fate/apikit v0.2.1-0.20220526131641-1d860b34f6ed // indirect
 	github.com/common-fate/iso8601 v1.0.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.11.0 // indirect
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -73,8 +74,10 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
