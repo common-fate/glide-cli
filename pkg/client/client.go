@@ -68,9 +68,10 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 
 	if res.StatusCode == http.StatusUnauthorized {
 		if cfContext.DashboardURL != "" {
-			return nil, clierr.New(fmt.Sprintf("To log in to Common Fate, run: run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+		} else {
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
 		}
-		e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
 	}
 
 	return res, e
