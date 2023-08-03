@@ -38,6 +38,13 @@ func TestShouldRefresh(t *testing.T) {
 			},
 			shouldRefresh: true,
 		},
+		{
+			name: "5 minutes after refreshes",
+			token: oauth2.Token{
+				Expiry: time.Now().Add(time.Minute * -5),
+			},
+			shouldRefresh: true,
+		},
 	}
 
 	for _, tc := range testcases {
