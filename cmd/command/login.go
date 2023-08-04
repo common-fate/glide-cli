@@ -2,6 +2,7 @@ package command
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/99designs/keyring"
 	"github.com/AlecAivazis/survey/v2"
@@ -15,8 +16,11 @@ import (
 )
 
 var Login = cli.Command{
-	Name:   "login",
-	Usage:  "Log in to Common Fate",
+	Name:  "login",
+	Usage: "Log in to Common Fate",
+	Flags: []cli.Flag{
+		&cli.BoolFlag{Name: "lazy", Usage: "the lazy flag lets granted decide whether a new login flow should be initiated based on the token expiry"},
+	},
 	Action: defaultLoginFlow.LoginAction,
 }
 
@@ -55,6 +59,25 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	}
 
 	ctx := c.Context
+
+	//check expire for current token if it exists
+	ts := tokenstore.New(cfg.CurrentContext, tokenstore.WithKeyring(lf.Keyring))
+
+	token, err := ts.Token()
+	if err != nil && err != tokenstore.ErrNotFound {
+		return err
+
+	}
+
+	//what do we consider to be 'close to expiry' for now ill set it at 5 minutes?
+	if token != nil && c.Bool("lazy") {
+		now := time.Now()
+		shouldRefresh := tokenstore.ShouldRefreshToken(*token, now)
+
+		if shouldRefresh {
+			clio.Debug("Auth token still valid, skipping login flow.")
+		}
+	}
 
 	authResponse := make(chan authflow.Response)
 

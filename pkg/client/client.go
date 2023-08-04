@@ -67,7 +67,11 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 	e := clierr.New(fmt.Sprintf("Common Fate API returned an error (code %v): %s", res.StatusCode, string(body)))
 
 	if res.StatusCode == http.StatusUnauthorized {
-		e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
+		if cfContext.DashboardURL != "" {
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+		} else {
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
+		}
 	}
 
 	return res, e
