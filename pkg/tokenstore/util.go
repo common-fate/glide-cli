@@ -11,7 +11,7 @@ func ShouldRefreshToken(token oauth2.Token, now time.Time) bool {
 
 	// if the token expires up to 5 minutes in the future,
 	// refresh it now.
-	timeToRefresh := time.Now().Add(5 * time.Minute)
+	timeToRefresh := now.Add(5 * time.Minute)
 
 	return expiry.Before(timeToRefresh)
 }

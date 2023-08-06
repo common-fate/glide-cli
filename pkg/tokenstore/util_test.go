@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
 
 	"golang.org/x/oauth2"
@@ -13,6 +14,7 @@ func TestShouldRefresh(t *testing.T) {
 	type testcase struct {
 		name          string
 		token         oauth2.Token
+		now           clock.Clock
 		shouldRefresh bool
 	}
 
@@ -22,6 +24,7 @@ func TestShouldRefresh(t *testing.T) {
 			token: oauth2.Token{
 				Expiry: time.Now().Add(time.Hour * 24),
 			},
+			now:           clock.New(),
 			shouldRefresh: false,
 		},
 		{
@@ -29,6 +32,8 @@ func TestShouldRefresh(t *testing.T) {
 			token: oauth2.Token{
 				Expiry: time.Now().Add(time.Minute * 2),
 			},
+			now: clock.New(),
+
 			shouldRefresh: true,
 		},
 		{
@@ -36,6 +41,8 @@ func TestShouldRefresh(t *testing.T) {
 			token: oauth2.Token{
 				Expiry: time.Now().Add(time.Minute * 5),
 			},
+			now: clock.New(),
+
 			shouldRefresh: true,
 		},
 		{
@@ -43,6 +50,8 @@ func TestShouldRefresh(t *testing.T) {
 			token: oauth2.Token{
 				Expiry: time.Now().Add(time.Minute * -5),
 			},
+			now: clock.New(),
+
 			shouldRefresh: true,
 		},
 	}
@@ -50,9 +59,7 @@ func TestShouldRefresh(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			now := time.Now()
-
-			outcome := ShouldRefreshToken(tc.token, now)
+			outcome := ShouldRefreshToken(tc.token, tc.now.Now())
 
 			assert.Equal(t, outcome, tc.shouldRefresh)
 
