@@ -76,6 +76,7 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 
 		if !shouldRefresh {
 			clio.Debug("Auth token still valid, skipping login flow.")
+			return nil
 		}
 	}
 
