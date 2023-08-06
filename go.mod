@@ -46,6 +46,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.30.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.6 // indirect
+	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/briandowns/spinner v1.23.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/common-fate/apikit v0.2.1-0.20220526131641-1d860b34f6ed // indirect
