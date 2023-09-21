@@ -110,7 +110,12 @@ func (s *Server) oauthLogin(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) oauthCallback(w http.ResponseWriter, r *http.Request) {
 	// Read oauthState from Cookie
-	oauthState, _ := r.Cookie("oauthstate")
+	oauthState, err := r.Cookie("oauthstate")
+	if err != nil {
+		log.Printf("error when reading oauthstate from cookie : %s", err.Error())
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
 
 	if r.FormValue("state") != oauthState.Value {
 		log.Println("invalid oauth state")
