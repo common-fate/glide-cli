@@ -73,6 +73,8 @@ func (lf LoginFlow) LoginAction(c *cli.Context) error {
 	if token != nil && c.Bool("lazy") {
 		now := time.Now()
 		shouldRefresh := tokenstore.ShouldRefreshToken(*token, now)
+		clio.Debugf("token", *token)
+		clio.Debugf("time.now", now)
 
 		if !shouldRefresh {
 			clio.Debug("Auth token still valid, skipping login flow.")
