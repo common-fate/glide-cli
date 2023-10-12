@@ -66,3 +66,39 @@ func (s *NotifyRefreshTokenSource) Token() (*oauth2.Token, error) {
 	s.T = t
 	return t, s.SaveToken(t)
 }
+
+// ForceNewToken forces a token refresh
+func (s *NotifyRefreshTokenSource) ForceNewToken() (*oauth2.Token, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.T.AccessToken == "" {
+		zap.S().Debugw("Access token is empty")
+	} else {
+		zap.S().Debugw("Access token is not empty")
+	}
+	if s.T.RefreshToken == "" {
+		zap.S().Debugw("Refresh token is empty")
+	} else {
+		zap.S().Debugw("Refresh token is not empty")
+	}
+	zap.S().Debugw("refreshing oauth2 token", "expiry", s.T.Expiry.String())
+	t, err := s.New.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	IDToken, ok := t.Extra("id_token").(string)
+	if !ok {
+		return nil, errors.New("could not find id_token in authentication response")
+	}
+
+	zap.S().Debug("set ID token as access token")
+
+	// currently, our Cognito REST API authentication uses the ID Token rather than the Access Token.
+	// for simplicity, we override the returned access token with the ID token,
+	// as the oauth2 package appends the access token automatically to outgoing requests.
+	t.AccessToken = IDToken
+
+	s.T = t
+	return t, s.SaveToken(t)
+}
