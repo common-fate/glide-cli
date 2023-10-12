@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/keyring"
 	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/cli/pkg/tokenstore"
+	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
 	"github.com/common-fate/useragent"
@@ -20,8 +21,9 @@ import (
 // ErrorHandlingClient checks the response status code
 // and creates an error if the API returns greater than 300.
 type ErrorHandlingClient struct {
-	Client    *http.Client
-	LoginHint string
+	TokenSource tokenstore.NotifyRefreshTokenSource
+	Client      *http.Client
+	LoginHint   string
 }
 
 func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
@@ -45,7 +47,6 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 			return nil, clierr.New(fmt.Sprintf("%s.\nTo get started with Common Fate, please run: '%s %s'", err, rd.LoginHint, cfContext.DashboardURL))
 		}
 		return nil, clierr.New(fmt.Sprintf("%s.\nTo get started with Common Fate, please run: '%s'", err, rd.LoginHint))
-
 	}
 	if err != nil {
 		return nil, err
@@ -54,6 +55,24 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 	if res.StatusCode < 300 {
 		// response is ok
 		return res, nil
+	}
+
+	// add error handling here
+	if res.StatusCode == 401 {
+		clio.Debug("received 401 code, refreshing token and retrying...")
+
+		// try and refresh the token and retry the API call
+		rd.TokenSource.ForceNewToken()
+
+		// retry the API call here
+		res, err := rd.Client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if res.StatusCode < 300 {
+			// response is ok
+			return res, nil
+		}
 	}
 
 	// if we get here, the API has returned an error
@@ -68,7 +87,7 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 
 	if res.StatusCode == http.StatusUnauthorized {
 		if cfContext.DashboardURL != "" {
-			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
 		} else {
 			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
 		}
