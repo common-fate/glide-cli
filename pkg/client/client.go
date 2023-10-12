@@ -56,6 +56,11 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 		return res, nil
 	}
 
+	// add error handling here
+	if res.StatusCode == 401 {
+		// try and refresh the token and retry the API call
+	}
+
 	// if we get here, the API has returned an error
 	// surface this as a Go error so we don't need to handle it everywhere in our CLI codebase.
 	defer res.Body.Close()
@@ -68,7 +73,7 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 
 	if res.StatusCode == http.StatusUnauthorized {
 		if cfContext.DashboardURL != "" {
-			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
 		} else {
 			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
 		}
