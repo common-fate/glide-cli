@@ -17,6 +17,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.28.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.7
 	github.com/aws/smithy-go v1.13.5
+	github.com/benbjohnson/clock v1.3.5
 	github.com/common-fate/clio v1.1.0
 	github.com/common-fate/cloudform v0.6.0
 	github.com/common-fate/common-fate v0.15.0-alpha1.0.20230313123710-ce52f67312c9
@@ -24,6 +25,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/pkg/errors v0.9.1
 	github.com/sethvargo/go-retry v0.2.4
+	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.24.1
 	golang.org/x/oauth2 v0.4.0
 )
@@ -46,7 +48,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.30.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.6 // indirect
-	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/briandowns/spinner v1.23.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/common-fate/apikit v0.2.1-0.20220526131641-1d860b34f6ed // indirect
@@ -68,8 +69,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/labstack/echo/v4 v4.9.1 // indirect
-	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -77,16 +76,9 @@ require (
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
-	golang.org/x/tools v0.3.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -102,9 +94,9 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.23.0
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
