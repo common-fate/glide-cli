@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/common-fate/cli/cmd/middleware"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/cmd/middleware"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/urfave/cli/v2"
 )

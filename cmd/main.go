@@ -3,19 +3,19 @@ package main
 import (
 	"os"
 
-	"github.com/common-fate/cli/cmd/command"
-	"github.com/common-fate/cli/cmd/command/bootstrap"
-	"github.com/common-fate/cli/cmd/command/config"
-	"github.com/common-fate/cli/cmd/command/handler"
+	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/cmd/command"
+	"github.com/common-fate/glide-cli/cmd/command/bootstrap"
+	"github.com/common-fate/glide-cli/cmd/command/config"
+	"github.com/common-fate/glide-cli/cmd/command/handler"
 	"go.uber.org/zap"
 
-	"github.com/common-fate/cli/cmd/command/provider"
-	"github.com/common-fate/cli/cmd/command/rules"
-	"github.com/common-fate/cli/cmd/command/targetgroup"
-	mw "github.com/common-fate/cli/cmd/middleware"
-	"github.com/common-fate/cli/internal/build"
-	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
+	"github.com/common-fate/glide-cli/cmd/command/provider"
+	"github.com/common-fate/glide-cli/cmd/command/rules"
+	"github.com/common-fate/glide-cli/cmd/command/targetgroup"
+	mw "github.com/common-fate/glide-cli/cmd/middleware"
+	"github.com/common-fate/glide-cli/internal/build"
 	"github.com/urfave/cli/v2"
 )
 

@@ -5,10 +5,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/common-fate/cli/pkg/client"
-	"github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/prompt"
-	"github.com/common-fate/cli/pkg/table"
+	"github.com/common-fate/glide-cli/pkg/client"
+	"github.com/common-fate/glide-cli/pkg/config"
+	"github.com/common-fate/glide-cli/pkg/prompt"
+	"github.com/common-fate/glide-cli/pkg/table"
 	"github.com/urfave/cli/v2"
 )
 

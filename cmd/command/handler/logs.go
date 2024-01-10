@@ -6,11 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/common-fate/cli/pkg/client"
-	"github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/prompt"
 	"github.com/common-fate/clio"
 	"github.com/common-fate/common-fate/pkg/cfaws"
+	"github.com/common-fate/glide-cli/pkg/client"
+	"github.com/common-fate/glide-cli/pkg/config"
+	"github.com/common-fate/glide-cli/pkg/prompt"
 	"github.com/urfave/cli/v2"
 )
 

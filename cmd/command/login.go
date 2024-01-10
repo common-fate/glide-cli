@@ -6,10 +6,10 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/common-fate/cli/pkg/authflow"
-	"github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/tokenstore"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/pkg/authflow"
+	"github.com/common-fate/glide-cli/pkg/config"
+	"github.com/common-fate/glide-cli/pkg/tokenstore"
 	"github.com/pkg/browser"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"

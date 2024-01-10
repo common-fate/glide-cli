@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/common-fate/cli/cmd/command/provider/generate"
-	mw "github.com/common-fate/cli/cmd/middleware"
-	"github.com/common-fate/cli/pkg/table"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/cmd/command/provider/generate"
+	mw "github.com/common-fate/glide-cli/cmd/middleware"
+	"github.com/common-fate/glide-cli/pkg/table"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/bootstrapper"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"

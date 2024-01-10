@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio/clierr"
+	"github.com/common-fate/glide-cli/pkg/config"
 	"github.com/urfave/cli/v2"
 )
 
