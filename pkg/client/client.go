@@ -8,10 +8,10 @@ import (
 	"net/url"
 
 	"github.com/99designs/keyring"
-	"github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/tokenstore"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
+	"github.com/common-fate/glide-cli/pkg/config"
+	"github.com/common-fate/glide-cli/pkg/tokenstore"
 	"github.com/common-fate/useragent"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"

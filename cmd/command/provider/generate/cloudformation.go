@@ -17,9 +17,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 	"github.com/aws/aws-sdk-go/aws"
 
-	"github.com/common-fate/cli/pkg/fmtconvert"
-	"github.com/common-fate/cli/pkg/ssmkey"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/pkg/fmtconvert"
+	"github.com/common-fate/glide-cli/pkg/ssmkey"
 	"github.com/common-fate/provider-registry-sdk-go/pkg/providerregistrysdk"
 	registryclient "github.com/common-fate/provider-registry-sdk-go/pkg/registryclient"
 	"github.com/pkg/errors"

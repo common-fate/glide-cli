@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/common-fate/awsconfigfile"
-	"github.com/common-fate/cli/pkg/client"
+	"github.com/common-fate/glide-cli/pkg/client"
 )
 
 // Source reads available AWS SSO profiles from the Common Fate API.

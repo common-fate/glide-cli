@@ -11,8 +11,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/common-fate/cli/pkg/config"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/pkg/config"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )

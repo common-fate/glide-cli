@@ -1,9 +1,9 @@
 package command
 
 import (
-	"github.com/common-fate/cli/pkg/config"
-	"github.com/common-fate/cli/pkg/tokenstore"
 	"github.com/common-fate/clio"
+	"github.com/common-fate/glide-cli/pkg/config"
+	"github.com/common-fate/glide-cli/pkg/tokenstore"
 	"github.com/urfave/cli/v2"
 )
 
