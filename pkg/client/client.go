@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/99designs/keyring"
+	"github.com/common-fate/clio"
 	"github.com/common-fate/clio/clierr"
 	"github.com/common-fate/common-fate/pkg/types"
 	"github.com/common-fate/glide-cli/pkg/config"
@@ -20,8 +22,9 @@ import (
 // ErrorHandlingClient checks the response status code
 // and creates an error if the API returns greater than 300.
 type ErrorHandlingClient struct {
-	Client    *http.Client
-	LoginHint string
+	Client     *http.Client
+	LoginHint  string
+	TokenStore *tokenstore.Storage
 }
 
 func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
@@ -63,15 +66,30 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return res, errors.Wrap(err, "reading error response body")
 	}
+	bodyString := string(body)
 
 	e := clierr.New(fmt.Sprintf("Common Fate API returned an error (code %v): %s", res.StatusCode, string(body)))
 
 	if res.StatusCode == http.StatusUnauthorized {
 		if cfContext.DashboardURL != "" {
-			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
 		} else {
 			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
 		}
+	}
+
+	if res.StatusCode == http.StatusBadRequest && strings.Contains(bodyString, "invalid_grant") {
+		err = rd.TokenStore.Clear()
+		if err != nil {
+			return res, errors.Wrap(err, "Error clearing cached Common Fate token")
+		}
+		clio.Debugf("Cleared Common Fate cached token due to oauth2: cannot fetch token: 400, invalid_grant error")
+		if cfContext.DashboardURL != "" {
+			e.Messages = append(e.Messages, clierr.Infof("It looks like the above error was caused by an invalid authentication token. We have cleared the token from your keychain. To re-run the command, you'll need to authenticate again by running: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+		} else {
+			e.Messages = append(e.Messages, clierr.Infof("It looks like the above error was caused by an invalid authentication token. We have cleared the token from your keychain. To re-run the command, you'll need to authenticate again by running: '%s'", rd.LoginHint))
+		}
+
 	}
 
 	return res, e
@@ -168,7 +186,7 @@ func New(ctx context.Context, server, context string, oauthConfig *oauth2.Config
 
 	oauthClient := oauth2.NewClient(ctx, src)
 
-	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginHint: co.LoginHint}
+	httpClient := &ErrorHandlingClient{Client: oauthClient, LoginHint: co.LoginHint, TokenStore: &ts}
 
 	return types.NewClientWithResponses(server, types.WithHTTPClient(httpClient))
 }
