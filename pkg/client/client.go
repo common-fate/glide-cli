@@ -85,9 +85,9 @@ func (rd *ErrorHandlingClient) Do(req *http.Request) (*http.Response, error) {
 		}
 		clio.Debugf("Cleared Common Fate cached token due to oauth2: cannot fetch token: 400, invalid_grant error")
 		if cfContext.DashboardURL != "" {
-			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
+			e.Messages = append(e.Messages, clierr.Infof("We have cleared the oauth2 token that is causing the above error. To log in to Common Fate, run: '%s %s'", rd.LoginHint, cfContext.DashboardURL))
 		} else {
-			e.Messages = append(e.Messages, clierr.Infof("To log in to Common Fate, run: '%s'", rd.LoginHint))
+			e.Messages = append(e.Messages, clierr.Infof("We have cleared the oauth2 token that is causing the above error. To log in to Common Fate, run: '%s'", rd.LoginHint))
 		}
 
 	}
