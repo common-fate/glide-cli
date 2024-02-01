@@ -1,4 +1,4 @@
-package cf
+package glidecli
 
 import (
 	"github.com/common-fate/glide-cli/cmd/command"
